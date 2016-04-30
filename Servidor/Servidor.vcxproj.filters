@@ -15,12 +15,57 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Servidor.c">
+    <ClCompile Include="Main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rede.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Fase1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Fase2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Fase3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Jogo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mapa.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Jogador.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Jogo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rede.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Fase1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Fase2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Fase3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Main.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mapa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Jogador.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Monstro.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

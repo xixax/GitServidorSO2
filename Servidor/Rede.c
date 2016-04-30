@@ -1,10 +1,7 @@
-#include <windows.h>
-#include <tchar.h>
-#include <io.h>
-#include <fcntl.h>
-#include <stdio.h>
-
+#include "Main.h"
 #include "Jogo.h"
+#include "Rede.h"
+
 
 #define PIPE_NAME1 TEXT("\\\\.\\pipe\\teste1")//Escreve
 #define PIPE_NAME2 TEXT("\\\\.\\pipe\\teste2")//Le
@@ -13,14 +10,9 @@
 
 HANDLE PipeLeitores[N_MAX_LEITORES];
 HANDLE hPipe;
-int total;
 BOOL fim = FALSE;
 
-DWORD WINAPI RecebeLeitores(LPVOID param);
-DWORD WINAPI AtendeCliente(LPVOID param);
-
-
-int _tmain(int argc, LPTSTR argv[]){
+void criaLigacoes(int argc, LPTSTR argv[]){
 	DWORD n;
 	HANDLE hThread;
 	TCHAR buf[TAM];
@@ -31,8 +23,6 @@ int _tmain(int argc, LPTSTR argv[]){
 	_setmode(_fileno(stdout), _O_WTEXT);
 	_setmode(_fileno(stderr), _O_WTEXT);
 #endif
-	//aloca memória
-	//j = malloc(sizeof(Jogo));
 
 	//Invocar a thread que inscreve novos leitores
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RecebeLeitores, NULL, 0, NULL);
@@ -40,12 +30,10 @@ int _tmain(int argc, LPTSTR argv[]){
 	//fazer isto sempre que se muda a struct, escreve para todos os clientes
 	do{
 		_tprintf(TEXT("[SERVIDOR] Frase: "));
-		//_fgetts(buf, 256, stdin);
 		_fgetts(j.buf, 256, stdin);
 		//Escrever para todos os leitores inscritos
-		if (j.buf[0]!='\n'){
+		if (j.buf[0] != '\n'){
 			for (int i = 0; i < total; i++)
-				//if (!WriteFile(PipeLeitores[i], buf, _tcslen(buf)*sizeof(TCHAR), &n, NULL)) {
 				if (!WriteFile(PipeLeitores[i], (LPCVOID)&j, sizeof(j), &n, NULL)) {
 				_tperror(TEXT("[ERRO] Escrever no pipe... (WriteFile)\n"));
 				//se der erro, temos de por aqui uma segurança, eliminar este cliente
@@ -53,15 +41,15 @@ int _tmain(int argc, LPTSTR argv[]){
 				}
 		}
 		_tprintf(TEXT("[SERVIDOR] Enviei %d bytes aos %d clientes... (WriteFile)\n"), n, total);
-	}// while (_tcsncmp(buf, TEXT("fim"), 3));
-	while (_tcsncmp(j.buf, TEXT("fim"), 3));
+	} while (_tcsncmp(j.buf, TEXT("fim"), 3));
 	fim = TRUE;
 
 	//Esperar a thread recebeLeitores terminar
 	WaitForSingleObject(hThread, INFINITE);
 	CloseHandle(hThread);
-	exit(0);
+	exit(0);//não terminar aqui
 }
+
 
 DWORD WINAPI RecebeLeitores(LPVOID param){
 	HANDLE hPipe;
@@ -77,7 +65,7 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 			exit(-1);
 		}
 		//inbound servidor<-cliente
-		hPipe = CreateNamedPipe(PIPE_NAME2, PIPE_ACCESS_INBOUND, PIPE_WAIT | PIPE_TYPE_MESSAGE 
+		hPipe = CreateNamedPipe(PIPE_NAME2, PIPE_ACCESS_INBOUND, PIPE_WAIT | PIPE_TYPE_MESSAGE
 			| PIPE_READMODE_MESSAGE, N_MAX_LEITORES, TAM * sizeof(TCHAR), TAM * sizeof(TCHAR),
 			1000, NULL);
 		if (hPipe == INVALID_HANDLE_VALUE){
@@ -103,6 +91,8 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 	return 0;
 }
 
+
+
 DWORD WINAPI AtendeCliente(LPVOID param){
 	HANDLE pipe = (HANDLE)param;
 	TCHAR buf[TAM];//no trabalho é uma struct
@@ -111,14 +101,12 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	int ret;
 	while (1){
 		//ler do pipe do cliente
-		//ret = ReadFile(pipe, buf, TAM, &n, NULL);
 		ret = ReadFile(pipe, (LPVOID)&j, sizeof(j), &n, NULL);
-		if (n > 0 && j.buf[0]!='\n'){
+		if (n > 0 && j.buf[0] != '\n'){
 			j.buf[(n / sizeof(TCHAR)) - 1] = '\0'; //pos=255
 			//escrever para todos
 			_tprintf(TEXT("[SERVIDOR] Recebi %d bytes: '%s'... (ReadFile)\n"), n, j.buf);
 			for (int i = 0; i < total; i++){
-				//WriteFile(PipeLeitores[i], buf, _tcslen(buf)*sizeof(TCHAR), &n, NULL);
 				WriteFile(PipeLeitores[i], (LPCVOID)&j, sizeof(j), &n, NULL);
 			}
 		}
