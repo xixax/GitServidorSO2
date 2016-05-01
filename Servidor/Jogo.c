@@ -1,4 +1,5 @@
 #include "Jogo.h"
+#include "Mapa.h"
 
 //fazer aqui as funçoes que vão inicializar o Jogo
 
@@ -16,6 +17,9 @@ void inicializacaoMatriz(Jogo *j){
 	j->mapa = auxmapa;
 	for (x = 0; x < 70; x++){
 		j->mapa[x] = auxmapa;//ver se isto inicializa bem
+		for (int y = 0; y < 70; y++){
+			ConstrutorMapa(&(j->mapa[x][y]));
+		}
 	}
 }
 
@@ -25,7 +29,7 @@ void preencheMatriz(Jogo *j){
 	//testes 70*70
 	srand(time(NULL));//faz com que a funcao rand nao devolva sempre a mesma sequencia
 	int tamanho = 70 * 70;
-	//preencher primeiro os muros
+	//preencher primeiro os muros/por muros a volta do mapa
 	for (int x = 0; x < 70; x++){
 		for (int y = 0; y < 70; y++){
 			if (j->mapa[x][y].muro == 0){
@@ -69,9 +73,16 @@ void preencheMatriz(Jogo *j){
 		j->jogadores[i].posx = auxX;
 		j->jogadores[i].posy = auxY;
 
-		j->mapa[auxX][auxY].jogador = &(j->jogadores[i]);//ver se esta bem
+		j->mapa[auxX][auxY].jogador = &(j->jogadores[i]);//ver se esta bem / ter acerteza que jogadores esta inicializado
 	}
 
 	
 }
 
+
+
+void actualizaJogo(Jogo *j){
+	//quando tem um jogador ao lado dele, ataca
+	//quando esta na mesma posicao que um objecto apanha
+
+}
