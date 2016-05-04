@@ -1,11 +1,10 @@
 #include "Jogo.h"
-#include "Mapa.h"
 
 //fazer aqui as funçoes que vão inicializar o Jogo
 
 void ConstrutorJogo(Jogo *j){
-	inicializacaoMatriz(&j);
-	preencheMatriz(&j);
+	inicializacaoMatriz(j);
+	preencheMatriz(j);
 }
 
 //receber linhas e colunas se não for mapa pré-definido
@@ -30,6 +29,13 @@ void preencheMatriz(Jogo *j){
 	srand(time(NULL));//faz com que a funcao rand nao devolva sempre a mesma sequencia
 	int tamanho = 70 * 70;
 	//preencher primeiro os muros/por muros a volta do mapa
+	for (int x = 0; x < 70; x++){
+		j->mapa[x][0].muro = 1;
+		j->mapa[x][69].muro = 1;
+		j->mapa[0][x].muro = 1;
+		j->mapa[69][x].muro = 1;
+	}
+
 	for (int x = 0; x < 70; x++){
 		for (int y = 0; y < 70; y++){
 			if (j->mapa[x][y].muro == 0){
@@ -84,5 +90,48 @@ void preencheMatriz(Jogo *j){
 void actualizaJogo(Jogo *j){
 	//quando tem um jogador ao lado dele, ataca
 	//quando esta na mesma posicao que um objecto apanha
+
+}
+
+void MovimentoJogador(Mapa **mapa, Jogador *j, int comando){
+	//if comando==0 cima// comado==1 baixo // comando==2 esquerda // comando==3 direita
+
+	switch (comando)
+	{
+	case 0:
+		if (mapa[j->posx - 1][j->posy].muro == 0 && mapa[j->posx - 1][j->posy].jogador == NULL){//x-1 é para cima
+			//transfere jogador
+			mapa[j->posx - 1][j->posy].jogador = mapa[j->posx][j->posy].jogador;
+			mapa[j->posx][j->posy].jogador = NULL;
+			j->posx = j->posx - 1;//ver se e preciso fazer no mapa tambem
+		}
+		break;
+	case 1:
+		if (mapa[j->posx + 1][j->posy].muro == 0 && mapa[j->posx + 1][j->posy].jogador == NULL){//x+1 é para baixo
+			//transfere jogador
+			mapa[j->posx + 1][j->posy].jogador = mapa[j->posx][j->posy].jogador;
+			mapa[j->posx][j->posy].jogador = NULL;
+			j->posx = j->posx + 1;//ver se e preciso fazer no mapa tambem
+		}
+		break;
+	case 2:
+		if (mapa[j->posx][j->posy - 1].muro == 0 && mapa[j->posx][j->posy - 1].jogador == NULL){//y-1 é para a esquerda
+			//transfere jogador
+			mapa[j->posx][j->posy - 1].jogador = mapa[j->posx][j->posy].jogador;
+			mapa[j->posx][j->posy].jogador = NULL;
+			j->posy = j->posy - 1;//ver se e preciso fazer no mapa tambem
+		}
+		break;
+	case 3:
+		if (mapa[j->posx][j->posy + 1].muro == 0 && mapa[j->posx][j->posy + 1].jogador == NULL){//y+1 é para cima
+			//transfere jogador
+			mapa[j->posx][j->posy + 1].jogador = mapa[j->posx][j->posy].jogador;
+			mapa[j->posx][j->posy].jogador = NULL;
+			j->posy = j->posy + 1;//ver se e preciso fazer no mapa tambem
+		}
+		break;
+	default:
+		break;
+	}
 
 }

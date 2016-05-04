@@ -1,6 +1,5 @@
 #include "Main.h"
 #include "Rede.h"
-#include "Fase1.h"
 
 int _tmain(int argc, LPTSTR argv[]){
 

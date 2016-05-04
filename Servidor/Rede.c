@@ -1,22 +1,24 @@
 #include "Main.h"
 #include "Jogo.h"
 #include "Rede.h"
+#include "Mensagem.h"
 
 
 #define PIPE_NAME1 TEXT("\\\\.\\pipe\\teste1")//Escreve
 #define PIPE_NAME2 TEXT("\\\\.\\pipe\\teste2")//Le
+#define REGISTRY_KEY TEXT("Software\\SO2Trabalho\\")//necessário para o registry
 #define N_MAX_LEITORES 10
 #define TAM 256
 
 HANDLE PipeLeitores[N_MAX_LEITORES];
 HANDLE hPipe;
+HANDLE auxPIPE;
 BOOL fim = FALSE;
 
 void criaLigacoes(int argc, LPTSTR argv[]){
 	DWORD n;
 	HANDLE hThread;
 	TCHAR buf[TAM];
-	Jogo j;
 
 #ifdef UNICODE 
 	_setmode(_fileno(stdin), _O_WTEXT);
@@ -27,23 +29,6 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 	//Invocar a thread que inscreve novos leitores
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RecebeLeitores, NULL, 0, NULL);
 
-	//fazer isto sempre que se muda a struct, escreve para todos os clientes
-	do{
-		_tprintf(TEXT("[SERVIDOR] Frase: "));
-		_fgetts(j.buf, 256, stdin);
-		//Escrever para todos os leitores inscritos
-		if (j.buf[0] != '\n'){
-			for (int i = 0; i < total; i++)
-				if (!WriteFile(PipeLeitores[i], (LPCVOID)&j, sizeof(j), &n, NULL)) {
-				_tperror(TEXT("[ERRO] Escrever no pipe... (WriteFile)\n"));
-				//se der erro, temos de por aqui uma segurança, eliminar este cliente
-				exit(-1);
-				}
-		}
-		_tprintf(TEXT("[SERVIDOR] Enviei %d bytes aos %d clientes... (WriteFile)\n"), n, total);
-	} while (_tcsncmp(j.buf, TEXT("fim"), 3));
-	fim = TRUE;
-
 	//Esperar a thread recebeLeitores terminar
 	WaitForSingleObject(hThread, INFINITE);
 	CloseHandle(hThread);
@@ -53,6 +38,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 DWORD WINAPI RecebeLeitores(LPVOID param){
 	HANDLE hPipe;
+	Jogador j;
 	//nao permitir mais do que o limite de jogadores, mas tambem nao precisa de acabar
 	while (!fim && total < N_MAX_LEITORES){
 		_tprintf(TEXT("[SERVIDOR] Vou passar à criação de uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME1);
@@ -79,6 +65,9 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 			exit(-1);
 		}
 
+		//ver maneira de fazer isto melhor
+		auxPIPE = PipeLeitores[total];
+
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
 		total++;
 	}
@@ -92,24 +81,133 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 }
 
 
-
 DWORD WINAPI AtendeCliente(LPVOID param){
-	HANDLE pipe = (HANDLE)param;
-	TCHAR buf[TAM];//no trabalho é uma struct
-	Jogo j;
+	HANDLE pipeRecebe = (HANDLE)param;
+	HANDLE pipeEnvia = auxPIPE;
+	Mensagem msg;
 	int n;
 	int ret;
+
+	//Jogo
+	Jogo jogo;
+
+	//Dados Cliente
+	Jogador jogador;
+	ConstrutorJogador(&jogador);
+
+	//Registry Key
+
+	//Fase 1 - o servidor aguardo o login do jogador
 	while (1){
 		//ler do pipe do cliente
-		ret = ReadFile(pipe, (LPVOID)&j, sizeof(j), &n, NULL);
-		if (n > 0 && j.buf[0] != '\n'){
+		ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+		if (n > 0){
+			if (msg.comando == 4){//faz login
+				TCHAR key[TAM] = REGISTRY_KEY, password[TAM];
+				HKEY hKey;
+				DWORD size;
+				wcscat_s(key,sizeof(key),msg.Username);
+				if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+				{
+					RegQueryValueEx(hKey, TEXT("Password"), NULL, NULL, (LPBYTE)password, &size);
+					if (_tcscmp(password, msg.Password) == 0){
+						msg.sucesso = 1;
+					}
+					else{
+						msg.sucesso = 0;
+					}
+				}
+				else{
+					msg.sucesso = 0;
+				}
+				WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
+				if (msg.sucesso == 1){
+					break;//se login foi sucesso passa para proxima fase
+				}
+			}
+			if (msg.comando == 5){//faz registo
+				HKEY key;
+				DWORD keyDword;
+				TCHAR keyName[TAM] = REGISTRY_KEY;
+				DWORD size;
+				wcscat_s(keyName,sizeof(keyName),msg.Username);
+
+				if (RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS){//verifica se já tem um cliente igual
+					msg.sucesso = 0;
+				}
+				else{
+					if (RegCreateKeyEx(HKEY_CURRENT_USER, keyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyDword) != ERROR_SUCCESS) {//cria o Registry
+						msg.sucesso = 0;
+					}
+					else{
+						RegSetValueEx(key, TEXT("Nome"), 0, REG_SZ, (LPBYTE)msg.Username, _tcslen(msg.Username)*sizeof(TCHAR));
+						RegSetValueEx(key, TEXT("Password"), 0, REG_SZ, (LPBYTE)msg.Password, _tcslen(msg.Password)*sizeof(TCHAR));
+						msg.sucesso = 1;
+					}
+				}
+				WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
+			}	
+		}
+
+		jogo.mapa = NULL;
+		jogo.jogadores = NULL;
+
+		//Fase 2
+		while (1){
+			//ler do pipe do cliente
+			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+			if (n > 0){
+				if (msg.comando == 6){//criar jogo
+					if (jogo.mapa != NULL && jogo.jogadores!=NULL){
+						ConstrutorJogo(&jogo);
+						jogo.jogadores = &jogador;
+						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+					}
+					else{
+						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+					}
+				}
+				if (msg.comando == 7){//juntar a jogo
+					if (jogo.mapa != NULL && jogo.jogadores != NULL){
+						jogo.jogadores = &jogador;
+						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+					}
+					else{
+						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+					}
+				}
+				if (msg.comando == 8){
+					break;
+				}
+			}
+		}
+
+
+		//Fase 3- o jogo em si, nao sao aceites novos jogadores
+		for (int i = 0; i < total; i++){//envia para todos o jogo 
+			WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+		}
+		while (1){
+			//ler do pipe do cliente
+			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+			if (n > 0){
+				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
+				//aqui faz actualiza jogo
+				for (int i = 0; i < total; i++){//envia para todos o jogo 
+					WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+				}
+			}
+		}
+
+
+		/*if (n > 0 && j.buf[0] != '\n'){
 			j.buf[(n / sizeof(TCHAR)) - 1] = '\0'; //pos=255
 			//escrever para todos
 			_tprintf(TEXT("[SERVIDOR] Recebi %d bytes: '%s'... (ReadFile)\n"), n, j.buf);
 			for (int i = 0; i < total; i++){
 				WriteFile(PipeLeitores[i], (LPCVOID)&j, sizeof(j), &n, NULL);
 			}
-		}
+		}*/
 	}
 	return 0;
 }

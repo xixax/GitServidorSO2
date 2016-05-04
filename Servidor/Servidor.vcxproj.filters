@@ -21,15 +21,6 @@
     <ClCompile Include="Rede.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fase1.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Fase2.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Fase3.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Jogo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -47,15 +38,6 @@
     <ClInclude Include="Rede.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Fase1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Fase2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Fase3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Main.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Monstro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mensagem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

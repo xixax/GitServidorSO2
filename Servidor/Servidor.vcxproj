@@ -76,9 +76,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Fase1.c" />
-    <ClCompile Include="Fase2.c" />
-    <ClCompile Include="Fase3.c" />
     <ClCompile Include="Jogador.c" />
     <ClCompile Include="Jogo.c" />
     <ClCompile Include="Main.c" />
@@ -88,11 +85,9 @@
   <ItemGroup>
     <ClInclude Include="Jogador.h" />
     <ClInclude Include="Mapa.h" />
-    <ClInclude Include="Fase1.h" />
-    <ClInclude Include="Fase2.h" />
-    <ClInclude Include="Fase3.h" />
     <ClInclude Include="Jogo.h" />
     <ClInclude Include="Main.h" />
+    <ClInclude Include="Mensagem.h" />
     <ClInclude Include="Monstro.h" />
     <ClInclude Include="Rede.h" />
   </ItemGroup>
