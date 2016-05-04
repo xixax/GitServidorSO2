@@ -150,7 +150,6 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		}
 
 		jogo.mapa = NULL;
-		jogo.jogadores = NULL;
 
 		//Fase 2
 		while (1){
@@ -158,9 +157,9 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
 				if (msg.comando == 6){//criar jogo
-					if (jogo.mapa != NULL && jogo.jogadores!=NULL){
+					if (jogo.mapa != NULL){
 						ConstrutorJogo(&jogo);
-						jogo.jogadores = &jogador;
+						jogo.jogador = jogador;//adicionar não trocar completamente
 						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 					}
 					else{
@@ -168,8 +167,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 					}
 				}
 				if (msg.comando == 7){//juntar a jogo
-					if (jogo.mapa != NULL && jogo.jogadores != NULL){
-						jogo.jogadores = &jogador;
+					if (jogo.mapa != NULL){
+						jogo.jogador = jogador;
 						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 					}
 					else{
@@ -191,8 +190,10 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
+				//aqui se põe o semáforo
 				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
 				//aqui faz actualiza jogo
+				actualizaJogo(&jogo);
 				for (int i = 0; i < total; i++){//envia para todos o jogo 
 					WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				}

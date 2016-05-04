@@ -68,18 +68,17 @@ void preencheMatriz(Jogo *j){
 
 	//aqui colocar em diferentes posicoes os monstros e os jogadores
 	int auxX, auxY;
-	int tam = 0;
 
-	for (int i = 0; i < tam; i++){
+	for (int i = 0; i < total; i++){
 		do{
 			auxX = rand() % 70;//0 a 69
 			auxY = rand() % 70;//0 a 69
 		} while (j->mapa[auxX][auxY].cafeina == 1 || j->mapa[auxX][auxY].muro == 1 || j->mapa[auxX][auxY].orangebull == 1 || j->mapa[auxX][auxY].pedras == 1 || j->mapa[auxX][auxY].vitamina == 1);
 
-		j->jogadores[i].posx = auxX;
-		j->jogadores[i].posy = auxY;
+		jogadores[i].posx = auxX;
+		jogadores[i].posy = auxY;
 
-		j->mapa[auxX][auxY].jogador = &(j->jogadores[i]);//ver se esta bem / ter acerteza que jogadores esta inicializado
+		j->mapa[auxX][auxY].jogador = &(jogadores[i]);//ver se esta bem / ter acerteza que jogadores esta inicializado
 	}
 
 	
@@ -90,7 +89,50 @@ void preencheMatriz(Jogo *j){
 void actualizaJogo(Jogo *j){
 	//quando tem um jogador ao lado dele, ataca
 	//quando esta na mesma posicao que um objecto apanha
+	//o tamanho do mapa tem de estar em variaveis globais
+	for (int x = 0; x < total; x++){
+		if (j->mapa[jogadores[x].posx - 1][jogadores[x].posy].jogador != NULL){
+			//por condicao se for pedra -2
+			j->mapa[jogadores[x].posx - 1][jogadores[x].posy].jogador->vida = j->mapa[jogadores[x].posx - 1][jogadores[x].posy].jogador->vida - 1;
+		}
+		if (j->mapa[jogadores[x].posx + 1][jogadores[x].posy].jogador != NULL){
+			//por condicao se for pedra -2
+			j->mapa[jogadores[x].posx + 1][jogadores[x].posy].jogador->vida = j->mapa[jogadores[x].posx + 1][jogadores[x].posy].jogador->vida - 1;
+		}
+		if (j->mapa[jogadores[x].posx][jogadores[x].posy - 1].jogador != NULL){
+			//por condicao se for pedra -2
+			j->mapa[jogadores[x].posx][jogadores[x].posy - 1].jogador->vida = j->mapa[jogadores[x].posx][jogadores[x].posy - 1].jogador->vida - 1;
+		}
+		if (j->mapa[jogadores[x].posx][jogadores[x].posy + 1].jogador != NULL){
+			//por condicao se for pedra -2
+			j->mapa[jogadores[x].posx][jogadores[x].posy + 1].jogador->vida = j->mapa[jogadores[x].posx][jogadores[x].posy + 1].jogador->vida - 1;
+		}
 
+		if (j->mapa[jogadores[x].posx][jogadores[x].posy].cafeina == 1){
+			if (jogadores[x].lentidao == LentidaoJogador){
+				jogadores[x].lentidao = jogadores[x].lentidao - TiraLentidaoCafeina;
+				j->mapa[jogadores[x].posx][jogadores[x].posy].cafeina = 0;
+			}
+		}
+		if (j->mapa[jogadores[x].posx][jogadores[x].posy].orangebull == 1){
+			if (jogadores[x].vida < VidaJogador * 2 && jogadores[x].vida + VidaOrangeBull < VidaJogador * 2){
+				jogadores[x].vida = jogadores[x].vida + VidaOrangeBull;
+				j->mapa[jogadores[x].posx][jogadores[x].posy].orangebull = 0;
+			}
+		}
+		if (j->mapa[jogadores[x].posx][jogadores[x].posy].pedras >0){
+			if (jogadores[x].pedras < 15){
+				jogadores[x].pedras = jogadores[x].pedras + 1;
+				j->mapa[jogadores[x].posx][jogadores[x].posy].pedras = j->mapa[jogadores[x].posx][jogadores[x].posy].pedras-1;
+			}
+		}
+		if (j->mapa[jogadores[x].posx][jogadores[x].posy].vitamina == 1){
+			if (jogadores[x].vida < VidaJogador * 2 && jogadores[x].vida + VidaVitaminas < VidaJogador * 2){
+				jogadores[x].vida = jogadores[x].vida + VidaVitaminas;
+				j->mapa[jogadores[x].posx][jogadores[x].posy].vitamina = 0;
+			}
+		}
+	}
 }
 
 void MovimentoJogador(Mapa **mapa, Jogador *j, int comando){
