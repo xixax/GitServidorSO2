@@ -197,18 +197,11 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				for (int i = 0; i < total; i++){//envia para todos o jogo 
 					WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				}
+				//falta por aqui o clock
+				//1/15 - 1 segundo são 15 instantes
+				//Sleep(1000 * (jogador.lentidao / 15)); - isto é o timer concluido, depois experimentar
 			}
 		}
-
-
-		/*if (n > 0 && j.buf[0] != '\n'){
-			j.buf[(n / sizeof(TCHAR)) - 1] = '\0'; //pos=255
-			//escrever para todos
-			_tprintf(TEXT("[SERVIDOR] Recebi %d bytes: '%s'... (ReadFile)\n"), n, j.buf);
-			for (int i = 0; i < total; i++){
-				WriteFile(PipeLeitores[i], (LPCVOID)&j, sizeof(j), &n, NULL);
-			}
-		}*/
 	}
 	return 0;
 }

@@ -35,6 +35,17 @@ void preencheMatriz(Jogo *j){
 		j->mapa[0][x].muro = 1;
 		j->mapa[69][x].muro = 1;
 	}
+	for (int x = 10; x < 70;x=x+10){
+		for (int y = 0; y < 70; y++){
+			j->mapa[x][y].muro = 1;
+			j->mapa[y][x].muro = 1;
+			if (y % 5 == 0){
+				j->mapa[x][y].muro = 2;//por portas nas paredes
+				j->mapa[y][x].muro = 2;//por portas nas paredes
+			}
+		}
+	}
+	//////////////////////////////////////////////////////////
 
 	for (int x = 0; x < 70; x++){
 		for (int y = 0; y < 70; y++){
@@ -122,7 +133,7 @@ void actualizaJogo(Jogo *j){
 		}
 		if (j->mapa[jogadores[x].posx][jogadores[x].posy].pedras >0){
 			if (jogadores[x].pedras < 15){
-				jogadores[x].pedras = jogadores[x].pedras + 1;
+				jogadores[x].pedras = jogadores[x].pedras + 1;//apanha todas e não só 1
 				j->mapa[jogadores[x].posx][jogadores[x].posy].pedras = j->mapa[jogadores[x].posx][jogadores[x].posy].pedras-1;
 			}
 		}

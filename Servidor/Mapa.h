@@ -4,7 +4,7 @@
 typedef struct Mapa{
 	int visibilidade;//0 invisivel/1 visivel
 
-	int muro;//0 se este bloco não for muro/ 1 se este bloco for muro
+	int muro;//0 se este bloco não for muro/ 1 se este bloco for muro / 2 se for porta
 
 	Jogador *jogador;
 	//monstro
