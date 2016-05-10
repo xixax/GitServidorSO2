@@ -13,6 +13,7 @@
 HANDLE PipeLeitores[N_MAX_LEITORES];
 HANDLE hPipe;
 HANDLE auxPIPE;
+HANDLE hmutex;
 BOOL fim = FALSE;
 
 void criaLigacoes(int argc, LPTSTR argv[]){
@@ -25,6 +26,13 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 	_setmode(_fileno(stdout), _O_WTEXT);
 	_setmode(_fileno(stderr), _O_WTEXT);
 #endif
+	//inicializacao de um mutex
+	hmutex = CreateMutex(NULL,FALSE,TEXT("Mutex"));
+	if (hmutex == NULL)
+	{
+		printf("CreateMutex error: %d\n", GetLastError());
+		return 1;
+	}
 
 	//Invocar a thread que inscreve novos leitores
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RecebeLeitores, NULL, 0, NULL);
@@ -71,6 +79,10 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
 		total++;
 	}
+
+	//espera por todas as threads acabarem
+	WaitForMultipleObjects(total,PipeLeitores, TRUE, INFINITE);
+
 	//desliga cada named pipe
 	for (int i = 0; i < total; i++){
 		DisconnectNamedPipe(PipeLeitores[i]);
@@ -159,7 +171,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				if (msg.comando == 6){//criar jogo
 					if (jogo.mapa != NULL){
 						ConstrutorJogo(&jogo);
-						jogo.jogador = jogador;//adicionar não trocar completamente
+						//adicionar não trocar completamente
+						jogadores[totalnojogo++] = jogador;//ver se esta bem
 						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 					}
 					else{
@@ -168,7 +181,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				}
 				if (msg.comando == 7){//juntar a jogo
 					if (jogo.mapa != NULL){
-						jogo.jogador = jogador;
+						//jogo.jogador = jogador;
+						jogadores[totalnojogo++] = jogador;//ver se esta bem
 						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 					}
 					else{
@@ -191,6 +205,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
 				//aqui se põe o semáforo
+				WaitForSingleObject(hmutex,INFINITE);
+				//faz açao
 				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
@@ -200,6 +216,9 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				//falta por aqui o clock
 				//1/15 - 1 segundo são 15 instantes
 				//Sleep(1000 * (jogador.lentidao / 15)); - isto é o timer concluido, depois experimentar
+				
+				//release mutex
+				ReleaseMutex(hmutex);
 			}
 		}
 	}

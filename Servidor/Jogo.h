@@ -1,5 +1,6 @@
 #include "Mapa.h"
 int total;
+int totalnojogo;
 Jogador *jogadores;//todos os jogadores - mais facil para modificar os parametros depois
 
 typedef struct Jogos{
