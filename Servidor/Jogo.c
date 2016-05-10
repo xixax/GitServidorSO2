@@ -75,24 +75,24 @@ void preencheMatriz(Jogo *j){
 			}
 		}
 	}
+}
 
-
+void adicionaJogadoresMapa(Jogo *j){
+	//fazer funcao para isto
 	//aqui colocar em diferentes posicoes os monstros e os jogadores
 	int auxX, auxY;
 
-	for (int i = 0; i < total; i++){
+	for (int i = 0; i < totalnojogo; i++){
 		do{
 			auxX = rand() % 70;//0 a 69
 			auxY = rand() % 70;//0 a 69
-		} while (j->mapa[auxX][auxY].cafeina == 1 || j->mapa[auxX][auxY].muro == 1 || j->mapa[auxX][auxY].orangebull == 1 || j->mapa[auxX][auxY].pedras == 1 || j->mapa[auxX][auxY].vitamina == 1);
+		} while (j->mapa[auxX][auxY].cafeina == 1 || j->mapa[auxX][auxY].muro == 1 || j->mapa[auxX][auxY].muro == 2 || j->mapa[auxX][auxY].orangebull == 1 || j->mapa[auxX][auxY].pedras == 1 || j->mapa[auxX][auxY].vitamina == 1 || j->mapa[auxX][auxY].jogador == NULL);
 
 		jogadores[i].posx = auxX;
 		jogadores[i].posy = auxY;
 
 		j->mapa[auxX][auxY].jogador = &(jogadores[i]);//ver se esta bem / ter acerteza que jogadores esta inicializado
 	}
-
-	
 }
 
 

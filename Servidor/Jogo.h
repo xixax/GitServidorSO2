@@ -16,6 +16,7 @@ void inicializacaoMatriz(Jogo *j);
 void preencheMatriz(Jogo *j);
 void actualizaJogo(Jogo *j);
 void MovimentoJogador(Mapa **mapa, Jogador *j, int comando);
+void adicionaJogadoresMapa(Jogo *j);
 
 
 //funcao de inicializacao da matriz que vai ser o mapa e do relogio

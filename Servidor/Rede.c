@@ -195,6 +195,9 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}
 		}
 
+		//adiciona os jogadores ao mapa
+		adicionaJogadoresMapa(&jogo);
+
 
 		//Fase 3- o jogo em si, nao sao aceites novos jogadores
 		for (int i = 0; i < total; i++){//envia para todos o jogo 
