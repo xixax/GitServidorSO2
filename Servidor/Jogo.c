@@ -12,10 +12,10 @@ void inicializacaoMatriz(Jogo *j){
 	int x = 0;
 	
 	//mudar depois o valor 70
-	Mapa auxmapa[70];
-	j->mapa = auxmapa;
+	//Mapa auxmapa[70];
+	j->mapa = malloc(sizeof(Mapa)*70);
 	for (x = 0; x < 70; x++){
-		j->mapa[x] = auxmapa;//ver se isto inicializa bem
+		j->mapa[x] = malloc(sizeof(Mapa) * 70);//ver se isto inicializa bem
 		for (int y = 0; y < 70; y++){
 			ConstrutorMapa(&(j->mapa[x][y]));
 		}
