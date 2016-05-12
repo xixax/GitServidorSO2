@@ -112,54 +112,58 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	//Fase 1 - o servidor aguardo o login do jogador
 	while (1){
 		//ler do pipe do cliente
-		ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
-		if (n > 0){
-			if (msg.comando == 4){//faz login
-				TCHAR key[TAM] = REGISTRY_KEY, password[TAM];
-				HKEY hKey;
-				DWORD size;
-				wcscat_s(key,sizeof(key),msg.Username);
-				if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
-				{
-					RegQueryValueEx(hKey, TEXT("Password"), NULL, NULL, (LPBYTE)password, &size);
-					if (_tcscmp(password, msg.Password) == 0){
-						msg.sucesso = 1;
+		do{
+			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+			if (n > 0){
+				if (msg.comando == 4){//faz login
+					TCHAR key[TAM] = REGISTRY_KEY, password[TAM];
+					HKEY hKey;
+					DWORD size;
+					TCHAR Username[TAM];
+					wcscpy(Username, msg.Username);
+					wcscat(key, Username);
+					if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+					{
+						RegQueryValueEx(hKey, TEXT("Password"), NULL, NULL, (LPBYTE)password, &size);
+						if (_tcscmp(password, msg.Password) == 0){
+							msg.sucesso = 1;
+						}
+						else{
+							msg.sucesso = 0;
+						}
 					}
 					else{
 						msg.sucesso = 0;
 					}
+					WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
+					if (msg.sucesso == 1){
+						break;//se login foi sucesso passa para proxima fase
+					}
 				}
-				else{
-					msg.sucesso = 0;
-				}
-				WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
-				if (msg.sucesso == 1){
-					break;//se login foi sucesso passa para proxima fase
+				if (msg.comando == 5){//faz registo
+					HKEY key;
+					DWORD keyDword;
+					TCHAR keyName[TAM] = REGISTRY_KEY;
+					DWORD size;
+					wcscat_s(keyName, sizeof(keyName), msg.Username);
+
+					if (RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS){//verifica se já tem um cliente igual
+						msg.sucesso = 0;
+					}
+					else{
+						if (RegCreateKeyEx(HKEY_CURRENT_USER, keyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyDword) != ERROR_SUCCESS) {//cria o Registry
+							msg.sucesso = 0;
+						}
+						else{
+							RegSetValueEx(key, TEXT("Nome"), 0, REG_SZ, (LPBYTE)msg.Username, _tcslen(msg.Username)*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("Password"), 0, REG_SZ, (LPBYTE)msg.Password, _tcslen(msg.Password)*sizeof(TCHAR));
+							msg.sucesso = 1;
+						}
+					}
+					WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
 				}
 			}
-			if (msg.comando == 5){//faz registo
-				HKEY key;
-				DWORD keyDword;
-				TCHAR keyName[TAM] = REGISTRY_KEY;
-				DWORD size;
-				wcscat_s(keyName,sizeof(keyName),msg.Username);
-
-				if (RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS){//verifica se já tem um cliente igual
-					msg.sucesso = 0;
-				}
-				else{
-					if (RegCreateKeyEx(HKEY_CURRENT_USER, keyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyDword) != ERROR_SUCCESS) {//cria o Registry
-						msg.sucesso = 0;
-					}
-					else{
-						RegSetValueEx(key, TEXT("Nome"), 0, REG_SZ, (LPBYTE)msg.Username, _tcslen(msg.Username)*sizeof(TCHAR));
-						RegSetValueEx(key, TEXT("Password"), 0, REG_SZ, (LPBYTE)msg.Password, _tcslen(msg.Password)*sizeof(TCHAR));
-						msg.sucesso = 1;
-					}
-				}
-				WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
-			}	
-		}
+		} while (msg.sucesso != 1);
 
 		jogo.mapa = NULL;
 
