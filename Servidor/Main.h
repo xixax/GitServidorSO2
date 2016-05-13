@@ -4,6 +4,19 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+//numero maximo de jogadores
+#define N_MAX_LEITORES 10
+
+//Tam default
+#define TAM 256
+
+//Named pipes
+#define PIPE_NAME1 TEXT("\\\\.\\pipe\\teste1")//Escreve
+#define PIPE_NAME2 TEXT("\\\\.\\pipe\\teste2")//Le
+
+//Registry
+#define REGISTRY_KEY TEXT("Software\\SO2Trabalho\\")//necessário para o registry
+
 //Visibilidade
 #define Visibilidade 10;
 

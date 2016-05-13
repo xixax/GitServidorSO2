@@ -3,13 +3,6 @@
 #include "Rede.h"
 #include "Mensagem.h"
 
-
-#define PIPE_NAME1 TEXT("\\\\.\\pipe\\teste1")//Escreve
-#define PIPE_NAME2 TEXT("\\\\.\\pipe\\teste2")//Le
-#define REGISTRY_KEY TEXT("Software\\SO2Trabalho\\")//necessário para o registry
-#define N_MAX_LEITORES 10
-#define TAM 256
-
 HANDLE PipeLeitores[N_MAX_LEITORES];
 HANDLE hPipe;
 HANDLE auxPIPE;
@@ -168,9 +161,9 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		jogo.mapa = NULL;
 
 		//Fase 2
+		int flg = 0;//esta flag e para saber se ele já esta a espera do inicio do jogo ou nao
 		while (1){
 			//ler do pipe do cliente
-			int flg = 0;//esta flag e para saber se ele já esta a espera do inicio do jogo ou nao
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
 				if (flg == 0){
@@ -178,8 +171,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 						if (jogo.mapa == NULL){
 							ConstrutorJogo(&jogo);
 							//adicionar não trocar completamente
-							jogadores = malloc(sizeof(Jogador)*N_MAX_LEITORES);
-							jogadores[totalnojogo++] = jogador;//ver se esta bem
+							jogadores[totalnojogo++] = &jogador;//ver se esta bem
 							flg = 1;
 							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 						}
@@ -192,7 +184,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 					if (msg.comando == 7){//juntar a jogo
 						if (jogo.mapa != NULL){
 							//jogo.jogador = jogador;
-							jogadores[totalnojogo++] = jogador;//ver se esta bem
+							jogadores[totalnojogo++] = &jogador;//ver se esta bem
 							flg = 1;
 							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 						}
@@ -216,13 +208,13 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}
 			//adiciona os jogadores ao mapa
 			adicionaJogadoresMapa(&jogo);
-			//Fase 3- o jogo em si, nao sao aceites novos jogadores
-			for (int i = 0; i < total; i++){//envia para todos o jogo 
-				WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-			}
 		}
 
+
 		//Fase 3- o jogo em si, nao sao aceites novos jogadores
+		//envia o jogo para todos
+		jogo.jogador = jogador;
+		WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 		while (1){
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
@@ -230,11 +222,17 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				//aqui se põe o semáforo
 				WaitForSingleObject(hmutex,INFINITE);
 				//faz açao
-				MovimentoJogador(&jogo.mapa, &jogador, msg.comando);
+				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
+				jogo.jogador = jogador;
+				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+				jogo.jogador.posx=0;//fazer algo melhor aqui
+				jogo.jogador.posy = 0;
 				for (int i = 0; i < total; i++){//envia para todos o jogo 
-					WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+					if (PipeLeitores[i] != pipeEnvia){
+						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+					}
 				}
 				//falta por aqui o clock
 				//1/15 - 1 segundo são 15 instantes

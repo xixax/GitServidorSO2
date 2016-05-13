@@ -1,10 +1,10 @@
 #include "Mapa.h"
 int total;
 int totalnojogo;
-Jogador *jogadores;//todos os jogadores - mais facil para modificar os parametros depois
+Jogador *jogadores[10];//todos os jogadores - mais facil para modificar os parametros depois
 
 typedef struct Jogos{
-	Mapa **mapa;
+	Mapa *mapa;
 	Jogador jogador;//utilizado para enviar o jogador do cliente
 	//monstro
 	// _TCHARbuf[256];
