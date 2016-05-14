@@ -8,11 +8,15 @@ HANDLE hPipe;
 HANDLE auxPIPE;
 HANDLE hmutex;
 BOOL fim = FALSE;
+Jogo jogo;//jogo inicializado
 
 void criaLigacoes(int argc, LPTSTR argv[]){
 	DWORD n;
 	HANDLE hThread;
 	TCHAR buf[TAM];
+
+	//poe variavel mapa a null
+	jogo.mapa = NULL;
 
 #ifdef UNICODE 
 	_setmode(_fileno(stdin), _O_WTEXT);
@@ -39,7 +43,6 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 DWORD WINAPI RecebeLeitores(LPVOID param){
 	HANDLE hPipe;
-	Jogador j;
 	//nao permitir mais do que o limite de jogadores, mas tambem nao precisa de acabar
 	while (!fim && total < N_MAX_LEITORES){
 		_tprintf(TEXT("[SERVIDOR] Vou passar à criação de uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME1);
@@ -92,10 +95,6 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	Mensagem msg;
 	int n;
 	int ret;
-
-	//Jogo
-	Jogo jogo;
-
 	//Dados Cliente
 	Jogador jogador;
 	ConstrutorJogador(&jogador);
@@ -158,7 +157,6 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}
 		} while (msg.sucesso != 1);
 
-		jogo.mapa = NULL;
 
 		//Fase 2
 		int flg = 0;//esta flag e para saber se ele já esta a espera do inicio do jogo ou nao
@@ -204,6 +202,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		if (jogo.jogocomecou == 0){
 			jogo.jogocomecou = 1;
 			for (int i = 0; i < total; i++){//envia para todos a informacao que o jogo vai comecar
+				msg.comando = 8;
 				WriteFile(PipeLeitores[i], (LPCVOID)&msg, sizeof(msg), &n, NULL);
 			}
 			//adiciona os jogadores ao mapa
@@ -213,8 +212,11 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 
 		//Fase 3- o jogo em si, nao sao aceites novos jogadores
 		//envia o jogo para todos
+		WaitForSingleObject(hmutex, INFINITE);//acho que nao esta a funcionar
 		jogo.jogador = jogador;
+		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogo.jogador.vida, jogo.jogador.lentidao, jogo.jogador.pedras, jogo.jogador.posx, jogo.jogador.posy);
 		WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+		ReleaseMutex(hmutex);
 		while (1){
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
