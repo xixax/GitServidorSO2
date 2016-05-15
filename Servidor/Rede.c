@@ -169,7 +169,12 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 						if (jogo.mapa == NULL){
 							ConstrutorJogo(&jogo);
 							//adicionar não trocar completamente
-							jogadores[totalnojogo++] = &jogador;//ver se esta bem
+							for (int i = 0; i < total; i++){
+								if (PipeLeitores[i] == pipeEnvia){
+									jogadores[i] = &jogador;//ver se esta bem
+									totalnojogo++;
+								}
+							}
 							flg = 1;
 							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 						}
@@ -182,7 +187,12 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 					if (msg.comando == 7){//juntar a jogo
 						if (jogo.mapa != NULL){
 							//jogo.jogador = jogador;
-							jogadores[totalnojogo++] = &jogador;//ver se esta bem
+							for (int i = 0; i < total; i++){
+								if (PipeLeitores[i] == pipeEnvia){
+									jogadores[i] = &jogador;//ver se esta bem
+									totalnojogo++;
+								}
+							}
 							flg = 1;
 							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 						}
@@ -229,11 +239,12 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				actualizaJogo(&jogo);
 				jogo.jogador = jogador;
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-				jogo.jogador.posx=0;//fazer algo melhor aqui
-				jogo.jogador.posy = 0;
+				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
 				for (int i = 0; i < total; i++){//envia para todos o jogo 
 					if (PipeLeitores[i] != pipeEnvia){
+						jogo.jogador = *jogadores[i];
 						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
 					}
 				}
 				//falta por aqui o clock

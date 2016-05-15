@@ -6,6 +6,10 @@ void ConstrutorJogo(Jogo *j){
 	inicializacaoMatriz(j);
 	preencheMatriz(j);
 	j->jogocomecou = 0;
+	
+	for (int i = 0; i < total; i++){//poe o vector jogadores todos para null
+		jogadores[i] = NULL;
+	}
 }
 
 //receber linhas e colunas se não for mapa pré-definido
