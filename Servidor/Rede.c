@@ -240,8 +240,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				jogo.jogador = jogador;
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
-				for (int i = 0; i < total; i++){//envia para todos o jogo 
-					if (PipeLeitores[i] != pipeEnvia){
+				for (int i = 0; i < totalnojogo; i++){//envia para todos o jogo 
+					if (PipeLeitores[i] != pipeEnvia && jogadores[i]!=NULL){
 						jogo.jogador = *jogadores[i];
 						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
