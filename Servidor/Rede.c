@@ -71,7 +71,7 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 
 		//ver maneira de fazer isto melhor
 		auxPIPE = PipeLeitores[total];
-
+		//guardar o array, para o waitmultipleobject
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
 		total++;
 	}
@@ -97,6 +97,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	int ret;
 	//Dados Cliente
 	Jogador jogador;
+	Jogo erroJogo;//para mensagens de erro
+	erroJogo.mapa = NULL;
 	ConstrutorJogador(&jogador);
 
 	//Registry Key
@@ -163,6 +165,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		while (1){
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+			_tprintf(TEXT("[CLIENTE]:AQUI!!!!!! %d!\n"), jogo.jogocomecou);
 			if (n > 0){
 				if (flg == 0){
 					if (msg.comando == 6){//criar jogo
@@ -179,13 +182,11 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 						}
 						else{
-							Jogo erroJogo;
-							erroJogo.mapa = NULL;
 							WriteFile(pipeEnvia, (LPCVOID)&erroJogo, sizeof(erroJogo), &n, NULL);//envia para o cliente
 						}
 					}
 					if (msg.comando == 7){//juntar a jogo
-						if (jogo.mapa != NULL){
+						if (jogo.mapa != NULL && jogo.jogocomecou == 0){
 							//jogo.jogador = jogador;
 							for (int i = 0; i < total; i++){
 								if (PipeLeitores[i] == pipeEnvia){
@@ -197,7 +198,10 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
 						}
 						else{
-							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+							erroJogo.jogocomecou = 1;
+							erroJogo.jogador = jogador;
+							_tprintf(TEXT("[CLIENTE]:AQUI2!!!!!! %d %s !\n"), erroJogo.jogocomecou, erroJogo.mapa);
+							WriteFile(pipeEnvia, (LPCVOID)&erroJogo, sizeof(erroJogo), &n, NULL);//envia para o cliente
 						}
 					}
 				}
@@ -212,8 +216,10 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		if (jogo.jogocomecou == 0){
 			jogo.jogocomecou = 1;
 			for (int i = 0; i < total; i++){//envia para todos a informacao que o jogo vai comecar
-				msg.comando = 8;
-				WriteFile(PipeLeitores[i], (LPCVOID)&msg, sizeof(msg), &n, NULL);
+				if (jogadores[i] != NULL){
+					msg.comando = 8;
+					WriteFile(PipeLeitores[i], (LPCVOID)&msg, sizeof(msg), &n, NULL);
+				}
 			}
 			//adiciona os jogadores ao mapa
 			adicionaJogadoresMapa(&jogo);
@@ -247,6 +253,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
 					}
 				}
+				//por aqui o releasemutex
 				//falta por aqui o clock
 				//1/15 - 1 segundo são 15 instantes
 				//Sleep(1000 * (jogador.lentidao / 15)); - isto é o timer concluido, depois experimentar

@@ -15,15 +15,17 @@ void ConstrutorJogo(Jogo *j){
 //receber linhas e colunas se não for mapa pré-definido
 void inicializacaoMatriz(Jogo *j){
 	//mudar depois o valor 70
-	Mapa auxMapa[70*70];
+	//Mapa auxMapa[70*70];
+	j->mapa = malloc(sizeof(Mapa) * 70 * 70);
 	for (int x = 0; x < 70; x++){
 		for (int y = 0; y < 70; y++){
-			ConstrutorMapa(&auxMapa[x*70 + y]);
-			//j->mapa[x][y] = auxmapa;
-			//auxMapa[(x * 70) + y] = auxmapa;
+			//ConstrutorMapa(&auxMapa[x*70 + y]);
+			Mapa auxmapa;
+			ConstrutorMapa(&auxmapa);
+			j->mapa[x * 70 + y] = auxmapa;
 		}
 	}
-	j->mapa = auxMapa;
+	//j->mapa = auxMapa;
 }
 
 //ver como fazer as salas
@@ -107,6 +109,7 @@ void actualizaJogo(Jogo *j){
 	//quando tem um jogador ao lado dele, ataca
 	//quando esta na mesma posicao que um objecto apanha
 	//o tamanho do mapa tem de estar em variaveis globais
+	Mapa auxmapa=j->mapa[10*70 +10];
 	for (int x = 0; x < totalnojogo; x++){
 		if (j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador != NULL){
 			//por condicao se for pedra -2
