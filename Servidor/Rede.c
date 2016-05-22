@@ -43,6 +43,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 DWORD WINAPI RecebeLeitores(LPVOID param){
 	HANDLE hPipe;
+	HANDLE ThreadsAtendeCliente[N_MAX_LEITORES];
 	//nao permitir mais do que o limite de jogadores, mas tambem nao precisa de acabar
 	while (!fim && total < N_MAX_LEITORES){
 		_tprintf(TEXT("[SERVIDOR] Vou passar à criação de uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME1);
@@ -72,12 +73,12 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 		//ver maneira de fazer isto melhor
 		auxPIPE = PipeLeitores[total];
 		//guardar o array, para o waitmultipleobject
-		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
+		ThreadsAtendeCliente[total]=CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
 		total++;
 	}
 
 	//espera por todas as threads acabarem
-	WaitForMultipleObjects(total,PipeLeitores, TRUE, INFINITE);
+	WaitForMultipleObjects(total, ThreadsAtendeCliente, TRUE, INFINITE);
 
 	//desliga cada named pipe
 	for (int i = 0; i < total; i++){
