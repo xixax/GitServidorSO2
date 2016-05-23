@@ -89,6 +89,19 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 	return 0;
 }
 
+DWORD WINAPI Clock(LPVOID param){
+	DWORD n;
+	int i = 0;
+	while (1){
+		for (i = 0; i < total; i++){
+			if (jogadores[i] != NULL){
+				jogo.jogador=*jogadores[i];
+				WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+			}
+		}
+		Sleep((1000/15));
+	}
+}
 
 DWORD WINAPI AtendeCliente(LPVOID param){
 	HANDLE pipeRecebe = (HANDLE)param;
@@ -166,7 +179,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		while (1){
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
-			_tprintf(TEXT("[CLIENTE]:AQUI!!!!!! %d!\n"), jogo.jogocomecou);
+			//_tprintf(TEXT("[CLIENTE]:AQUI!!!!!! %d!\n"), jogo.jogocomecou);
 			if (n > 0){
 				if (flg == 0){
 					if (msg.comando == 6){//criar jogo
@@ -224,6 +237,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}
 			//adiciona os jogadores ao mapa
 			adicionaJogadoresMapa(&jogo);
+			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Clock, (LPVOID)NULL, 0, NULL);
 		}
 
 
@@ -245,15 +259,15 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
 				jogo.jogador = jogador;
-				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+				//WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
-				for (int i = 0; i < totalnojogo; i++){//envia para todos o jogo 
+				/*for (int i = 0; i < total; i++){//envia para todos o jogo
 					if (PipeLeitores[i] != pipeEnvia && jogadores[i]!=NULL){
 						jogo.jogador = *jogadores[i];
-						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+						//WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
 					}
-				}
+				}*/
 				//por aqui o releasemutex
 				//falta por aqui o clock
 				//1/15 - 1 segundo são 15 instantes
