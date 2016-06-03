@@ -1,13 +1,12 @@
-#include "Main.h"
-#include "Jogador.h"
-#include "Monstro.h"
+#include "Jogo.h"
 
-typedef struct Mapa{
+
+typedef struct MemoriaPartilhada{
 	int visibilidade;//0 invisivel/1 visivel
 
 	int muro;//0 se este bloco não for muro/ 1 se este bloco for muro / 2 se for porta
 
-	Jogador *jogador;
+	Jogador jogador;
 	Monstro monstro;
 
 	//objectos
@@ -15,8 +14,9 @@ typedef struct Mapa{
 	int vitamina;//max 1
 	int orangebull;//max 1
 	int cafeina;//max 1
-}Mapa;
 
-void ConstrutorMapa(Mapa *m);
+	//mutex para nao mexerem todos ao mesmo tempo
+	HANDLE hmutex;
+}MemoriaPartilhada;
 
-//funçoes de construção do mapa
+//memoria a ser partilhada

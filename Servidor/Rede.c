@@ -1,7 +1,9 @@
 #include "Main.h"
-#include "Jogo.h"
+#include "MemoriaPartilhada.h"
 #include "Rede.h"
 #include "Mensagem.h"
+
+#define MAX 256
 
 HANDLE PipeLeitores[N_MAX_LEITORES];
 HANDLE hPipe;
@@ -9,11 +11,22 @@ HANDLE auxPIPE;
 HANDLE hmutex;
 BOOL fim = FALSE;
 Jogo jogo;//jogo inicializado
+//teste
+Jogador auxjog;
+HANDLE hMapFile;
+MemoriaPartilhada *temppartilhada;
+MemoriaPartilhada *mp;
 
 void criaLigacoes(int argc, LPTSTR argv[]){
 	DWORD n;
 	HANDLE hThread;
-	TCHAR buf[TAM];
+	//create process
+	TCHAR buf[TAM],executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
+	TCHAR argumentos[MAX] = TEXT("0 1 0 1 0");
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	//sharedmemory
+	
 
 	//poe variavel mapa a null
 	jogo.mapa = NULL;
@@ -30,6 +43,31 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 		printf("CreateMutex error: %d\n", GetLastError());
 		return 1;
 	}
+
+	//teste memoria partilhada
+	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(MemoriaPartilhada), "TrabalhoSO");
+	//nome do mapfile qualquer
+	if (hMapFile == NULL)
+		exit(-1);
+
+	mp = (MemoriaPartilhada *)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(MemoriaPartilhada));
+
+	if (mp == NULL)
+		exit(-1);
+
+	temppartilhada = (MemoriaPartilhada*)malloc(sizeof(MemoriaPartilhada));
+
+	CopyMemory((LPVOID)mp, temppartilhada, sizeof(MemoriaPartilhada));
+
+	mp->hmutex = hmutex;
+	
+	//teste cria monstro
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	si.cb = sizeof(STARTUPINFO);
+	if (CreateProcess(executavel, argumentos, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+		_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
+	}
+
 
 	//Invocar a thread que inscreve novos leitores
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RecebeLeitores, NULL, 0, NULL);
@@ -259,19 +297,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
 				jogo.jogador = jogador;
-				//WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
-				/*for (int i = 0; i < total; i++){//envia para todos o jogo
-					if (PipeLeitores[i] != pipeEnvia && jogadores[i]!=NULL){
-						jogo.jogador = *jogadores[i];
-						//WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-						WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//ver uma maneira melhor de fazer isto
-					}
-				}*/
-				//por aqui o releasemutex
-				//falta por aqui o clock
-				//1/15 - 1 segundo são 15 instantes
-				//Sleep(1000 * (jogador.lentidao / 15)); - isto é o timer concluido, depois experimentar
+				//envia a actualizaçao
+				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				
 				//release mutex
 				ReleaseMutex(hmutex);
