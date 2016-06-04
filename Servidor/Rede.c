@@ -22,10 +22,9 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 	HANDLE hThread;
 	//create process
 	TCHAR buf[TAM],executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
-	TCHAR argumentos[MAX] = TEXT("0 1 0 1 0");
+	TCHAR argumentos[MAX] = TEXT("0 3 0");//tipo,N,clonado
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
-	//sharedmemory
 	
 
 	//poe variavel mapa a null
@@ -44,13 +43,15 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 		return 1;
 	}
 
+	
+
 	//teste memoria partilhada
-	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(MemoriaPartilhada), "TrabalhoSO");
+	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 70*70*sizeof(MemoriaPartilhada), "TrabalhoSO");
 	//nome do mapfile qualquer
 	if (hMapFile == NULL)
 		exit(-1);
 
-	mp = (MemoriaPartilhada *)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(MemoriaPartilhada));
+	mp = (MemoriaPartilhada *)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 70*70*sizeof(MemoriaPartilhada));
 
 	if (mp == NULL)
 		exit(-1);
@@ -61,6 +62,9 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 	mp->hmutex = hmutex;
 	
+	//teste
+	ConstrutorJogo(&jogo);
+	copiaParaMonstro(&jogo, &mp);
 	//teste cria monstro
 	ZeroMemory(&si, sizeof(STARTUPINFO));
 	si.cb = sizeof(STARTUPINFO);
@@ -286,7 +290,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogo.jogador.vida, jogo.jogador.lentidao, jogo.jogador.pedras, jogo.jogador.posx, jogo.jogador.posy);
 		WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 		ReleaseMutex(hmutex);
-		while (1){
+		while (1){//fazer espera comando de saida, no final guarda os pontos que vao ser contados na thread clock
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
@@ -296,10 +300,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
-				jogo.jogador = jogador;
-				//envia a actualizaçao
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-				
 				//release mutex
 				ReleaseMutex(hmutex);
 			}

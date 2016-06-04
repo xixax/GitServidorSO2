@@ -20,3 +20,5 @@ typedef struct MemoriaPartilhada{
 }MemoriaPartilhada;
 
 //memoria a ser partilhada
+void copiaParaMonstro(Jogo *j,MemoriaPartilhada *mp);
+void copiaParaServidor(Jogo *j,MemoriaPartilhada *mp);
