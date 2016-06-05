@@ -43,35 +43,24 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 		return 1;
 	}
 
-	
-
-	//teste memoria partilhada
+	// memoria partilhada
 	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 70*70*sizeof(MemoriaPartilhada), "TrabalhoSO");
 	//nome do mapfile qualquer
 	if (hMapFile == NULL)
 		exit(-1);
 
+	
 	mp = (MemoriaPartilhada *)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 70*70*sizeof(MemoriaPartilhada));
 
 	if (mp == NULL)
 		exit(-1);
 
-	temppartilhada = (MemoriaPartilhada*)malloc(sizeof(MemoriaPartilhada));
+	temppartilhada =malloc(70*70*sizeof(MemoriaPartilhada));
 
-	CopyMemory((LPVOID)mp, temppartilhada, sizeof(MemoriaPartilhada));
+	CopyMemory(mp, temppartilhada, 70*70*sizeof(MemoriaPartilhada));
 
-	mp->hmutex = hmutex;
-	
-	//teste
-	ConstrutorJogo(&jogo);
-	copiaParaMonstro(&jogo, &mp);
-	//teste cria monstro
-	ZeroMemory(&si, sizeof(STARTUPINFO));
-	si.cb = sizeof(STARTUPINFO);
-	if (CreateProcess(executavel, argumentos, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
-		_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
-	}
-
+	free(temppartilhada);
+	/////////////////////
 
 	//Invocar a thread que inscreve novos leitores
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RecebeLeitores, NULL, 0, NULL);
@@ -135,6 +124,7 @@ DWORD WINAPI Clock(LPVOID param){
 	DWORD n;
 	int i = 0;
 	while (1){
+		copiaParaServidor(&jogo, mp);
 		for (i = 0; i < total; i++){
 			if (jogadores[i] != NULL){
 				jogo.jogador=*jogadores[i];
@@ -155,6 +145,13 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	Jogador jogador;
 	Jogo erroJogo;//para mensagens de erro
 	erroJogo.mapa = NULL;
+	//informacao para processos
+	TCHAR buf[TAM], executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
+	TCHAR argumentosDistraido[MAX] = TEXT("0 3 0");//tipo,N,clonado
+	TCHAR argumentosBully[MAX] = TEXT("1 0 0");//tipo,N,clonado
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	//////////////////////////
 	ConstrutorJogador(&jogador);
 
 	//Registry Key
@@ -280,6 +277,16 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			//adiciona os jogadores ao mapa
 			adicionaJogadoresMapa(&jogo);
 			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Clock, (LPVOID)NULL, 0, NULL);
+			//activa os monstros
+			copiaParaMonstro(&jogo, mp);
+			ZeroMemory(&si, sizeof(STARTUPINFO));
+			si.cb = sizeof(STARTUPINFO);
+			if (CreateProcess(executavel, argumentosDistraido, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+				_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
+			}
+			if (CreateProcess(executavel, argumentosBully, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+				_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
+			}
 		}
 
 
@@ -303,6 +310,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				//release mutex
 				ReleaseMutex(hmutex);
+				copiaParaMonstro(&jogo, mp);
 			}
 		}
 	}

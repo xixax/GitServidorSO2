@@ -24,14 +24,6 @@ void inicializacaoMatriz(Jogo *j){
 			ConstrutorMapa(&auxmapa);
 			j->mapa[x * 70 + y] = auxmapa;
 			//inicializacao monstro, para nao por mais um for
-			j->mapa[x * 70 + y].monstro.clonado = -1;
-			j->mapa[x * 70 + y].monstro.lentidao = -1;
-			j->mapa[x * 70 + y].monstro.N = -1;
-			j->mapa[x * 70 + y].monstro.posx = -1;
-			j->mapa[x * 70 + y].monstro.posy = -1;
-			j->mapa[x * 70 + y].monstro.sentido = -1;
-			j->mapa[x * 70 + y].monstro.tipo = -1;
-			j->mapa[x * 70 + y].monstro.vida = -1;
 		}
 	}
 }
