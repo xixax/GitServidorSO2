@@ -42,10 +42,6 @@ void copiaParaServidor(Jogo *j, MemoriaPartilhada *mp,HANDLE *hmutex){
 			j->mapa[(x)* 70 + y].cafeina = mp[(x)* 70 + y].cafeina;
 			//preenchimento jogador
 			if (j->mapa[(x)* 70 + y].jogador != NULL){
-				j->mapa[(x)* 70 + y].jogador->lentidao = mp[(x)* 70 + y].jogador.lentidao;
-				j->mapa[(x)* 70 + y].jogador->pedras = mp[(x)* 70 + y].jogador.pedras;
-				j->mapa[(x)* 70 + y].jogador->posx = mp[(x)* 70 + y].jogador.posx;
-				j->mapa[(x)* 70 + y].jogador->posy = mp[(x)* 70 + y].jogador.posy;
 				j->mapa[(x)* 70 + y].jogador->vida = mp[(x)* 70 + y].jogador.vida;
 			}
 			//preenchimento monstro

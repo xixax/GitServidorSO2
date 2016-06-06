@@ -297,7 +297,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogo.jogador.vida, jogo.jogador.lentidao, jogo.jogador.pedras, jogo.jogador.posx, jogo.jogador.posy);
 		WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 		ReleaseMutex(hmutex);
-		while (1){//fazer espera comando de saida, no final guarda os pontos que vao ser contados na thread clock
+		while (jogador.vida>0 && msg.comando!=9){//fazer espera comando de saida, no final guarda os pontos que vao ser contados na thread clock
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
@@ -314,5 +314,8 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}
 		}
 	}
+
+	//Aqui escrever o contador para os recordes nos registry
+
 	return 0;
 }

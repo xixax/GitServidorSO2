@@ -113,19 +113,43 @@ void actualizaJogo(Jogo *j){
 	for (int x = 0; x < totalnojogo; x++){
 		if (j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador != NULL){
 			//por condicao se for pedra -2
-			j->mapa[(jogadores[x]->posx - 1)*70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx - 1) + jogadores[x]->posy].jogador->vida - 1;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
+				j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx - 1) + jogadores[x]->posy].jogador->vida - 2;
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
+			}
+			else{
+				j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx - 1) + jogadores[x]->posy].jogador->vida - 1;
+			}
 		}
 		if (j->mapa[(jogadores[x]->posx + 1)*70 + jogadores[x]->posy].jogador != NULL){
 			//por condicao se for pedra -2
-			j->mapa[(jogadores[x]->posx + 1)*70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx + 1)*70 + jogadores[x]->posy].jogador->vida - 1;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
+				j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida - 2;
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
+			}
+			else{
+				j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida - 1;
+			}
 		}
 		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy - 1].jogador != NULL){
 			//por condicao se for pedra -2
-			j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy - 1].jogador->vida = j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy - 1].jogador->vida - 1;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida - 2;
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
+			}
+			else{
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida - 1;
+			}
 		}
 		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy + 1].jogador != NULL){
 			//por condicao se for pedra -2
-			j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy + 1].jogador->vida = j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy + 1].jogador->vida - 1;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida - 2;
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
+			}
+			else{
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida - 1;
+			}
 		}
 
 		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].cafeina == 1){
@@ -141,10 +165,10 @@ void actualizaJogo(Jogo *j){
 			}
 		}
 		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].pedras >0){
-			if (jogadores[x]->pedras < 15){
+			do{
 				jogadores[x]->pedras = jogadores[x]->pedras + 1;//apanha todas e não só 1
-				j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].pedras = j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].pedras-1;
-			}
+				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras - 1;
+			} while (jogadores[x]->pedras < 15 && j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras>0);
 		}
 		if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].vitamina == 1){
 			if (jogadores[x]->vida < VidaJogador * 2 && jogadores[x]->vida + VidaVitaminas < VidaJogador * 2){
