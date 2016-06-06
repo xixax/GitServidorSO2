@@ -17,6 +17,7 @@ HANDLE hMapFile;
 MemoriaPartilhada *temppartilhada;
 MemoriaPartilhada *mp;
 
+
 void criaLigacoes(int argc, LPTSTR argv[]){
 	DWORD n;
 	HANDLE hThread;
@@ -152,6 +153,11 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
 	//////////////////////////
+
+	////recordes
+	int RecordeActual=0;
+	TCHAR NomeJogador[TAM];
+	//
 	ConstrutorJogador(&jogador);
 
 	//Registry Key
@@ -174,6 +180,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 						RegQueryValueEx(hKey, TEXT("Password"), NULL, NULL, (LPBYTE)password, &size);
 						if (_tcscmp(password, msg.Password) == 0){
 							msg.sucesso = 1;
+							wcscpy(NomeJogador, Username);
 						}
 						else{
 							msg.sucesso = 0;
@@ -204,6 +211,12 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 						else{
 							RegSetValueEx(key, TEXT("Nome"), 0, REG_SZ, (LPBYTE)msg.Username, _tcslen(msg.Username)*sizeof(TCHAR));
 							RegSetValueEx(key, TEXT("Password"), 0, REG_SZ, (LPBYTE)msg.Password, _tcslen(msg.Password)*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("1"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("2"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("3"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("4"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("5"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							wcscpy(NomeJogador, keyName);
 							msg.sucesso = 1;
 						}
 					}
@@ -311,11 +324,46 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				//release mutex
 				ReleaseMutex(hmutex);
 				copiaParaMonstro(&jogo, mp);
+				RecordeActual++;
 			}
 		}
 	}
 
 	//Aqui escrever o contador para os recordes nos registry
-
+	TCHAR key[TAM] = REGISTRY_KEY, recorde[TAM];
+	HKEY hKey;
+	DWORD size;
+	wcscat(key, NomeJogador);
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+	{
+		RegQueryValueEx(hKey, TEXT("1"), NULL, NULL, (LPBYTE)recorde, &size);
+		if (_tcscmp(RecordeActual, recorde) > 0){
+			RegSetValueEx(key, TEXT("1"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+		}
+		else{
+			RegQueryValueEx(hKey, TEXT("2"), NULL, NULL, (LPBYTE)recorde, &size);
+			if (_tcscmp(RecordeActual, recorde) > 0){
+				RegSetValueEx(key, TEXT("2"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+			}
+			else{
+				RegQueryValueEx(hKey, TEXT("3"), NULL, NULL, (LPBYTE)recorde, &size);
+				if (_tcscmp(RecordeActual, recorde) > 0){
+					RegSetValueEx(key, TEXT("3"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+				}
+				else{
+					RegQueryValueEx(hKey, TEXT("4"), NULL, NULL, (LPBYTE)recorde, &size);
+					if (_tcscmp(RecordeActual, recorde) > 0){
+						RegSetValueEx(key, TEXT("4"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+					}
+					else{
+						RegQueryValueEx(hKey, TEXT("5"), NULL, NULL, (LPBYTE)recorde, &size);
+						if (_tcscmp(RecordeActual, recorde) > 0){
+							RegSetValueEx(key, TEXT("5"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+						}
+					}
+				}
+			}
+		}
+	}
 	return 0;
 }
