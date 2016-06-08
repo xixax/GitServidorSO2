@@ -1,5 +1,6 @@
 #include "Main.h"
 #include "Jogador.h"
+#include "Monstro.h"
 
 typedef struct Mapa{
 	int visibilidade;//0 invisivel/1 visivel
@@ -7,7 +8,7 @@ typedef struct Mapa{
 	int muro;//0 se este bloco não for muro/ 1 se este bloco for muro / 2 se for porta
 
 	Jogador *jogador;
-	//monstro
+	Monstro monstro;
 
 	//objectos
 	int pedras;//unico que pode ser mais que 1

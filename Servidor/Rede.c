@@ -1,25 +1,35 @@
 #include "Main.h"
-#include "Jogo.h"
+#include "MemoriaPartilhada.h"
 #include "Rede.h"
 #include "Mensagem.h"
 
-
-#define PIPE_NAME1 TEXT("\\\\.\\pipe\\teste1")//Escreve
-#define PIPE_NAME2 TEXT("\\\\.\\pipe\\teste2")//Le
-#define REGISTRY_KEY TEXT("Software\\SO2Trabalho\\")//necessário para o registry
-#define N_MAX_LEITORES 10
-#define TAM 256
+#define MAX 256
 
 HANDLE PipeLeitores[N_MAX_LEITORES];
 HANDLE hPipe;
 HANDLE auxPIPE;
 HANDLE hmutex;
 BOOL fim = FALSE;
+Jogo jogo;//jogo inicializado
+//teste
+Jogador auxjog;
+HANDLE hMapFile;
+MemoriaPartilhada *temppartilhada;
+MemoriaPartilhada *mp;
+
 
 void criaLigacoes(int argc, LPTSTR argv[]){
 	DWORD n;
 	HANDLE hThread;
-	TCHAR buf[TAM];
+	//create process
+	TCHAR buf[TAM],executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
+	TCHAR argumentos[MAX] = TEXT("0 3 0");//tipo,N,clonado
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	
+
+	//poe variavel mapa a null
+	jogo.mapa = NULL;
 
 #ifdef UNICODE 
 	_setmode(_fileno(stdin), _O_WTEXT);
@@ -34,6 +44,25 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 		return 1;
 	}
 
+	// memoria partilhada
+	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 70*70*sizeof(MemoriaPartilhada), "TrabalhoSO");
+	//nome do mapfile qualquer
+	if (hMapFile == NULL)
+		exit(-1);
+
+	
+	mp = (MemoriaPartilhada *)MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 70*70*sizeof(MemoriaPartilhada));
+
+	if (mp == NULL)
+		exit(-1);
+
+	temppartilhada =malloc(70*70*sizeof(MemoriaPartilhada));
+
+	CopyMemory(mp, temppartilhada, 70*70*sizeof(MemoriaPartilhada));
+
+	free(temppartilhada);
+	/////////////////////
+
 	//Invocar a thread que inscreve novos leitores
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)RecebeLeitores, NULL, 0, NULL);
 
@@ -46,7 +75,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 DWORD WINAPI RecebeLeitores(LPVOID param){
 	HANDLE hPipe;
-	Jogador j;
+	HANDLE ThreadsAtendeCliente[N_MAX_LEITORES];
 	//nao permitir mais do que o limite de jogadores, mas tambem nao precisa de acabar
 	while (!fim && total < N_MAX_LEITORES){
 		_tprintf(TEXT("[SERVIDOR] Vou passar à criação de uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME1);
@@ -75,13 +104,13 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 
 		//ver maneira de fazer isto melhor
 		auxPIPE = PipeLeitores[total];
-
-		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
+		//guardar o array, para o waitmultipleobject
+		ThreadsAtendeCliente[total]=CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AtendeCliente, (LPVOID)hPipe, 0, NULL);
 		total++;
 	}
 
 	//espera por todas as threads acabarem
-	WaitForMultipleObjects(total,PipeLeitores, TRUE, INFINITE);
+	WaitForMultipleObjects(total, ThreadsAtendeCliente, TRUE, INFINITE);
 
 	//desliga cada named pipe
 	for (int i = 0; i < total; i++){
@@ -92,6 +121,20 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 	return 0;
 }
 
+DWORD WINAPI Clock(LPVOID param){
+	DWORD n;
+	int i = 0;
+	while (1){
+		copiaParaServidor(&jogo, mp);
+		for (i = 0; i < total; i++){
+			if (jogadores[i] != NULL){
+				jogo.jogador=*jogadores[i];
+				WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+			}
+		}
+		Sleep((1000/15));
+	}
+}
 
 DWORD WINAPI AtendeCliente(LPVOID param){
 	HANDLE pipeRecebe = (HANDLE)param;
@@ -99,12 +142,22 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	Mensagem msg;
 	int n;
 	int ret;
-
-	//Jogo
-	Jogo jogo;
-
 	//Dados Cliente
 	Jogador jogador;
+	Jogo erroJogo;//para mensagens de erro
+	erroJogo.mapa = NULL;
+	//informacao para processos
+	TCHAR buf[TAM], executavel[MAX] = TEXT("C:\\Users\\ASUS\\Documents\\Ambiente de Trabalho\\Joao\\universidade3ano\\2semestre\\SO2\\Trabalho Prático\\Monstro\\Monstro\\Debug\\Monstro.exe");
+	TCHAR argumentosDistraido[MAX] = TEXT("0 3 0");//tipo,N,clonado
+	TCHAR argumentosBully[MAX] = TEXT("1 0 0");//tipo,N,clonado
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	//////////////////////////
+
+	////recordes
+	int RecordeActual=0;
+	TCHAR NomeJogador[TAM];
+	//
 	ConstrutorJogador(&jogador);
 
 	//Registry Key
@@ -112,81 +165,110 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	//Fase 1 - o servidor aguardo o login do jogador
 	while (1){
 		//ler do pipe do cliente
-		ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
-		if (n > 0){
-			if (msg.comando == 4){//faz login
-				TCHAR key[TAM] = REGISTRY_KEY, password[TAM];
-				HKEY hKey;
-				DWORD size;
-				wcscat_s(key,sizeof(key),msg.Username);
-				if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
-				{
-					RegQueryValueEx(hKey, TEXT("Password"), NULL, NULL, (LPBYTE)password, &size);
-					if (_tcscmp(password, msg.Password) == 0){
-						msg.sucesso = 1;
+		do{
+			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+			if (n > 0){
+				if (msg.comando == 4){//faz login
+					TCHAR key[TAM] = REGISTRY_KEY, password[TAM];
+					HKEY hKey;
+					DWORD size;
+					TCHAR Username[TAM];
+					wcscpy(Username, msg.Username);
+					wcscat(key, Username);
+					if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+					{
+						RegQueryValueEx(hKey, TEXT("Password"), NULL, NULL, (LPBYTE)password, &size);
+						if (_tcscmp(password, msg.Password) == 0){
+							msg.sucesso = 1;
+							wcscpy(NomeJogador, Username);
+						}
+						else{
+							msg.sucesso = 0;
+						}
 					}
 					else{
 						msg.sucesso = 0;
 					}
+					WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
+					if (msg.sucesso == 1){
+						break;//se login foi sucesso passa para proxima fase
+					}
 				}
-				else{
-					msg.sucesso = 0;
-				}
-				WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
-				if (msg.sucesso == 1){
-					break;//se login foi sucesso passa para proxima fase
+				if (msg.comando == 5){//faz registo
+					HKEY key;
+					DWORD keyDword;
+					TCHAR keyName[TAM] = REGISTRY_KEY;
+					DWORD size;
+					wcscat_s(keyName, sizeof(keyName), msg.Username);
+
+					if (RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS){//verifica se já tem um cliente igual
+						msg.sucesso = 0;
+					}
+					else{
+						if (RegCreateKeyEx(HKEY_CURRENT_USER, keyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyDword) != ERROR_SUCCESS) {//cria o Registry
+							msg.sucesso = 0;
+						}
+						else{
+							RegSetValueEx(key, TEXT("Nome"), 0, REG_SZ, (LPBYTE)msg.Username, _tcslen(msg.Username)*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("Password"), 0, REG_SZ, (LPBYTE)msg.Password, _tcslen(msg.Password)*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("1"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("2"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("3"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("4"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							RegSetValueEx(key, TEXT("5"), 0, REG_SZ, (LPBYTE)"0", _tcslen("0")*sizeof(TCHAR));
+							wcscpy(NomeJogador, keyName);
+							msg.sucesso = 1;
+						}
+					}
+					WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
 				}
 			}
-			if (msg.comando == 5){//faz registo
-				HKEY key;
-				DWORD keyDword;
-				TCHAR keyName[TAM] = REGISTRY_KEY;
-				DWORD size;
-				wcscat_s(keyName,sizeof(keyName),msg.Username);
+		} while (msg.sucesso != 1);
 
-				if (RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS){//verifica se já tem um cliente igual
-					msg.sucesso = 0;
-				}
-				else{
-					if (RegCreateKeyEx(HKEY_CURRENT_USER, keyName, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, &keyDword) != ERROR_SUCCESS) {//cria o Registry
-						msg.sucesso = 0;
-					}
-					else{
-						RegSetValueEx(key, TEXT("Nome"), 0, REG_SZ, (LPBYTE)msg.Username, _tcslen(msg.Username)*sizeof(TCHAR));
-						RegSetValueEx(key, TEXT("Password"), 0, REG_SZ, (LPBYTE)msg.Password, _tcslen(msg.Password)*sizeof(TCHAR));
-						msg.sucesso = 1;
-					}
-				}
-				WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
-			}	
-		}
-
-		jogo.mapa = NULL;
 
 		//Fase 2
+		int flg = 0;//esta flag e para saber se ele já esta a espera do inicio do jogo ou nao
 		while (1){
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
+			//_tprintf(TEXT("[CLIENTE]:AQUI!!!!!! %d!\n"), jogo.jogocomecou);
 			if (n > 0){
-				if (msg.comando == 6){//criar jogo
-					if (jogo.mapa != NULL){
-						ConstrutorJogo(&jogo);
-						//adicionar não trocar completamente
-						jogadores[totalnojogo++] = jogador;//ver se esta bem
-						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+				if (flg == 0){
+					if (msg.comando == 6){//criar jogo
+						if (jogo.mapa == NULL){
+							ConstrutorJogo(&jogo);
+							//adicionar não trocar completamente
+							for (int i = 0; i < total; i++){
+								if (PipeLeitores[i] == pipeEnvia){
+									jogadores[i] = &jogador;//ver se esta bem
+									totalnojogo++;
+								}
+							}
+							flg = 1;
+							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+						}
+						else{
+							WriteFile(pipeEnvia, (LPCVOID)&erroJogo, sizeof(erroJogo), &n, NULL);//envia para o cliente
+						}
 					}
-					else{
-						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
-					}
-				}
-				if (msg.comando == 7){//juntar a jogo
-					if (jogo.mapa != NULL){
-						//jogo.jogador = jogador;
-						jogadores[totalnojogo++] = jogador;//ver se esta bem
-						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
-					}
-					else{
-						WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+					if (msg.comando == 7){//juntar a jogo
+						if (jogo.mapa != NULL && jogo.jogocomecou == 0){
+							//jogo.jogador = jogador;
+							for (int i = 0; i < total; i++){
+								if (PipeLeitores[i] == pipeEnvia){
+									jogadores[i] = &jogador;//ver se esta bem
+									totalnojogo++;
+								}
+							}
+							flg = 1;
+							WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);//envia para o cliente
+						}
+						else{
+							erroJogo.jogocomecou = 1;
+							erroJogo.jogador = jogador;
+							_tprintf(TEXT("[CLIENTE]:AQUI2!!!!!! %d %s !\n"), erroJogo.jogocomecou, erroJogo.mapa);
+							WriteFile(pipeEnvia, (LPCVOID)&erroJogo, sizeof(erroJogo), &n, NULL);//envia para o cliente
+						}
 					}
 				}
 				if (msg.comando == 8){
@@ -196,11 +278,39 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		}
 
 
-		//Fase 3- o jogo em si, nao sao aceites novos jogadores
-		for (int i = 0; i < total; i++){//envia para todos o jogo 
-			WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+		/////////por isto numa funcao, avisa jogadores do inicio do jogo, dispoe os jogadores no mapa, e envia o jogo
+		if (jogo.jogocomecou == 0){
+			jogo.jogocomecou = 1;
+			for (int i = 0; i < total; i++){//envia para todos a informacao que o jogo vai comecar
+				if (jogadores[i] != NULL){
+					msg.comando = 8;
+					WriteFile(PipeLeitores[i], (LPCVOID)&msg, sizeof(msg), &n, NULL);
+				}
+			}
+			//adiciona os jogadores ao mapa
+			adicionaJogadoresMapa(&jogo);
+			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Clock, (LPVOID)NULL, 0, NULL);
+			//activa os monstros
+			copiaParaMonstro(&jogo, mp);
+			ZeroMemory(&si, sizeof(STARTUPINFO));
+			si.cb = sizeof(STARTUPINFO);
+			if (CreateProcess(executavel, argumentosDistraido, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+				_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
+			}
+			if (CreateProcess(executavel, argumentosBully, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+				_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
+			}
 		}
-		while (1){
+
+
+		//Fase 3- o jogo em si, nao sao aceites novos jogadores
+		//envia o jogo para todos
+		WaitForSingleObject(hmutex, INFINITE);//acho que nao esta a funcionar
+		jogo.jogador = jogador;
+		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogo.jogador.vida, jogo.jogador.lentidao, jogo.jogador.pedras, jogo.jogador.posx, jogo.jogador.posy);
+		WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
+		ReleaseMutex(hmutex);
+		while (jogador.vida>0 && msg.comando!=9){//fazer espera comando de saida, no final guarda os pontos que vao ser contados na thread clock
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
 			if (n > 0){
@@ -210,15 +320,48 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
-				for (int i = 0; i < total; i++){//envia para todos o jogo 
-					WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-				}
-				//falta por aqui o clock
-				//1/15 - 1 segundo são 15 instantes
-				//Sleep(1000 * (jogador.lentidao / 15)); - isto é o timer concluido, depois experimentar
-				
+				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				//release mutex
 				ReleaseMutex(hmutex);
+				copiaParaMonstro(&jogo, mp);
+				RecordeActual++;
+			}
+		}
+	}
+
+	//Aqui escrever o contador para os recordes nos registry
+	TCHAR key[TAM] = REGISTRY_KEY, recorde[TAM];
+	HKEY hKey;
+	DWORD size;
+	wcscat(key, NomeJogador);
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+	{
+		RegQueryValueEx(hKey, TEXT("1"), NULL, NULL, (LPBYTE)recorde, &size);
+		if (_tcscmp(RecordeActual, recorde) > 0){
+			RegSetValueEx(key, TEXT("1"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+		}
+		else{
+			RegQueryValueEx(hKey, TEXT("2"), NULL, NULL, (LPBYTE)recorde, &size);
+			if (_tcscmp(RecordeActual, recorde) > 0){
+				RegSetValueEx(key, TEXT("2"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+			}
+			else{
+				RegQueryValueEx(hKey, TEXT("3"), NULL, NULL, (LPBYTE)recorde, &size);
+				if (_tcscmp(RecordeActual, recorde) > 0){
+					RegSetValueEx(key, TEXT("3"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+				}
+				else{
+					RegQueryValueEx(hKey, TEXT("4"), NULL, NULL, (LPBYTE)recorde, &size);
+					if (_tcscmp(RecordeActual, recorde) > 0){
+						RegSetValueEx(key, TEXT("4"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+					}
+					else{
+						RegQueryValueEx(hKey, TEXT("5"), NULL, NULL, (LPBYTE)recorde, &size);
+						if (_tcscmp(RecordeActual, recorde) > 0){
+							RegSetValueEx(key, TEXT("5"), 0, REG_SZ, (LPBYTE)RecordeActual, sizeof(RecordeActual));
+						}
+					}
+				}
 			}
 		}
 	}
