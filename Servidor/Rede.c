@@ -126,6 +126,7 @@ DWORD WINAPI Clock(LPVOID param){
 	int i = 0, x, y;
 	while (1){
 		//copiaParaServidor(&jogo, mp);
+		WaitForSingleObject(hmutex, INFINITE);
 		for (x = 0; x < 70; x++){
 			for (y = 0; y < 70; y++){
 				jogo.auxMapa[x * 70 + y].cafeina = jogo.mapa[x * 70 + y].cafeina;
@@ -157,7 +158,7 @@ DWORD WINAPI Clock(LPVOID param){
 				WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 			}
 		}
-		//ReleaseMutex(hmutex);
+		ReleaseMutex(hmutex);
 		Sleep((1000/15));
 	}
 }
@@ -367,7 +368,6 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				MovimentoJogador(jogo.mapa, &jogador, msg.comando);
 				//aqui faz actualiza jogo
 				actualizaJogo(&jogo);
-				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				//release mutex
 				ReleaseMutex(hmutex);
 				//copiaParaMonstro(&jogo, mp);

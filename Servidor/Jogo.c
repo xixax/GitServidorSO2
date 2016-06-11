@@ -91,16 +91,18 @@ void adicionaJogadoresMapa(Jogo *j){
 	int auxX, auxY;
 
 	for (int i = 0; i < totalnojogo; i++){
-		do{
-			auxX = rand() % 70;//0 a 69
-			auxY = rand() % 70;//0 a 69
-			Mapa aux = j->mapa[auxX * 70 + auxY];
-		} while (j->mapa[auxX*70+auxY].cafeina == 1 || j->mapa[auxX*70+auxY].muro == 1 || j->mapa[auxX*70+auxY].muro == 2 || j->mapa[auxX*70+auxY].orangebull == 1 || j->mapa[auxX*70+auxY].pedras == 1 || j->mapa[auxX*70+auxY].vitamina == 1 || j->mapa[auxX*70+auxY].jogador != NULL);
+		if (jogadores[i] != NULL){
+			do{
+				auxX = rand() % 70;//0 a 69
+				auxY = rand() % 70;//0 a 69
+				Mapa aux = j->mapa[auxX * 70 + auxY];
+			} while (j->mapa[auxX * 70 + auxY].cafeina == 1 || j->mapa[auxX * 70 + auxY].muro == 1 || j->mapa[auxX * 70 + auxY].muro == 2 || j->mapa[auxX * 70 + auxY].orangebull == 1 || j->mapa[auxX * 70 + auxY].pedras == 1 || j->mapa[auxX * 70 + auxY].vitamina == 1 || j->mapa[auxX * 70 + auxY].jogador != NULL);
 
-		jogadores[i]->posx = auxX;
-		jogadores[i]->posy = auxY;
+			jogadores[i]->posx = auxX;
+			jogadores[i]->posy = auxY;
 
-		j->mapa[auxX*70+auxY].jogador = &(jogadores[i]);//ver se esta bem / ter acerteza que jogadores esta inicializado
+			j->mapa[auxX * 70 + auxY].jogador = jogadores[i];//ver se esta bem / ter acerteza que jogadores esta inicializado
+		}
 	}
 }
 
@@ -112,69 +114,105 @@ void actualizaJogo(Jogo *j){
 	//o tamanho do mapa tem de estar em variaveis globais
 	Mapa auxmapa=j->mapa[10*70 +10];
 	for (int x = 0; x < totalnojogo; x++){
-		if (j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador != NULL){
-			//por condicao se for pedra -2
-			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
-				j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx - 1) + jogadores[x]->posy].jogador->vida - 2;
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
+		if (jogadores[x] != NULL){
+			if (j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador != NULL){
+				//por condicao se for pedra -2
+				if (jogadores[x]->pedras >= 1){
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posx) == (jogadores[x]->posx - 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 2;
+							jogadores[x]->pedras = jogadores[x]->pedras - 1;
+						}
+					}
+				}
+				else{
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posx) == (jogadores[x]->posx - 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 1;
+						}
+					}
+				}
 			}
-			else{
-				j->mapa[(jogadores[x]->posx - 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx - 1) + jogadores[x]->posy].jogador->vida - 1;
+			if (j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador != NULL){
+				//por condicao se for pedra -2
+				if (jogadores[x]->pedras >= 1){
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posx) == (jogadores[x]->posx + 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 2;
+							jogadores[x]->pedras = jogadores[x]->pedras - 1;
+						}
+					}
+				}
+				else{
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posx) == (jogadores[x]->posx + 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 1;
+						}
+					}
+				}
 			}
-		}
-		if (j->mapa[(jogadores[x]->posx + 1)*70 + jogadores[x]->posy].jogador != NULL){
-			//por condicao se for pedra -2
-			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
-				j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida - 2;
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador != NULL){
+				//por condicao se for pedra -2
+				if (jogadores[x]->pedras >= 1){
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posy) == (jogadores[x]->posy - 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 2;
+							jogadores[x]->pedras = jogadores[x]->pedras - 1;
+						}
+					}
+				}
+				else{
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posy) == (jogadores[x]->posy - 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 1;
+						}
+					}
+				}
 			}
-			else{
-				j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida = j->mapa[(jogadores[x]->posx + 1) * 70 + jogadores[x]->posy].jogador->vida - 1;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador != NULL){
+				//por condicao se for pedra -2
+				if (jogadores[x]->pedras >= 1){
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posy) == (jogadores[x]->posy + 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 2;
+							jogadores[x]->pedras = jogadores[x]->pedras - 1;
+						}
+					}
+				}
+				else{
+					for (int y = 0; y < totalnojogo; y++){
+						if (jogadores[y] != NULL && (jogadores[y]->posy) == (jogadores[x]->posy + 1)){
+							jogadores[y]->vida = jogadores[y]->vida - 1;
+						}
+					}
+				}
 			}
-		}
-		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy - 1].jogador != NULL){
-			//por condicao se for pedra -2
-			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida - 2;
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
-			}
-			else{
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy - 1].jogador->vida - 1;
-			}
-		}
-		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy + 1].jogador != NULL){
-			//por condicao se for pedra -2
-			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras >= 1){
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida - 2;
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].jogador->pedras - 1;
-			}
-			else{
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy + 1].jogador->vida - 1;
-			}
-		}
 
-		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].cafeina == 1){
-			if (jogadores[x]->lentidao == LentidaoJogador){
-				jogadores[x]->lentidao = jogadores[x]->lentidao - TiraLentidaoCafeina;
-				j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].cafeina = 0;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].cafeina == 1){
+				if (jogadores[x]->lentidao == LentidaoJogador){
+					jogadores[x]->lentidao = jogadores[x]->lentidao - TiraLentidaoCafeina;
+					j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].cafeina = 0;
+				}
 			}
-		}
-		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].orangebull == 1){
-			if (jogadores[x]->vida < VidaJogador * 2 && jogadores[x]->vida + VidaOrangeBull < VidaJogador * 2){
-				jogadores[x]->vida = jogadores[x]->vida + VidaOrangeBull;
-				j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].orangebull = 0;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].orangebull == 1){
+				if (jogadores[x]->vida < VidaJogador * 2 && jogadores[x]->vida + VidaOrangeBull < VidaJogador * 2){
+					jogadores[x]->vida = jogadores[x]->vida + VidaOrangeBull;
+					j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].orangebull = 0;
+				}
 			}
-		}
-		if (j->mapa[(jogadores[x]->posx)*70 + jogadores[x]->posy].pedras >0){
-			do{
-				jogadores[x]->pedras = jogadores[x]->pedras + 1;//apanha todas e não só 1
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras - 1;
-			} while (jogadores[x]->pedras < 15 && j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras>0);
-		}
-		if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].vitamina == 1){
-			if (jogadores[x]->vida < VidaJogador * 2 && jogadores[x]->vida + VidaVitaminas < VidaJogador * 2){
-				jogadores[x]->vida = jogadores[x]->vida + VidaVitaminas;
-				j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].vitamina = 0;
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras > 0){
+				if (jogadores[x]->pedras < 15){
+					do{
+						jogadores[x]->pedras = jogadores[x]->pedras + 1;//apanha todas e não só 1
+						j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras = j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras - 1;
+					} while (jogadores[x]->pedras < 15 && j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].pedras>0);
+				}
+			}
+			if (j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].vitamina == 1){
+				if (jogadores[x]->vida < VidaJogador * 2 && jogadores[x]->vida + VidaVitaminas < VidaJogador * 2){
+					jogadores[x]->vida = jogadores[x]->vida + VidaVitaminas;
+					j->mapa[(jogadores[x]->posx) * 70 + jogadores[x]->posy].vitamina = 0;
+				}
 			}
 		}
 	}
