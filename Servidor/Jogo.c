@@ -1,5 +1,4 @@
 #include "Jogo.h"
-
 //fazer aqui as funçoes que vão inicializar o Jogo
 
 void ConstrutorJogo(Jogo *j){
@@ -20,9 +19,9 @@ void inicializacaoMatriz(Jogo *j){
 	for (int x = 0; x < 70; x++){
 		for (int y = 0; y < 70; y++){
 			//ConstrutorMapa(&auxMapa[x*70 + y]);
-			Mapa auxmapa;
-			ConstrutorMapa(&auxmapa);
-			j->mapa[x * 70 + y] = auxmapa;
+			//Mapa auxmapa;
+			ConstrutorMapa(&j->mapa[x * 70 + y]);
+			//j->mapa[x * 70 + y] = auxmapa;
 			//inicializacao monstro, para nao por mais um for
 		}
 	}

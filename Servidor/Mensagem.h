@@ -5,5 +5,7 @@ typedef struct Mensagem{
 	_TCHAR Password[30];
 	int sucesso;
 
+	int recorde1, recorde2, recorde3, recorde4, recorde5;
+
 	int comando;//0-cima 1-baixo 2-esquerda 3-direita 4-Faz Login 5-Faz Registo 6-Criar Jogo 7-Juntar a jogo 8-Começa jogo 9-Termina Jogo
 }Mensagem;

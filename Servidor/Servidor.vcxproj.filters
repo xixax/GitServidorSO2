@@ -59,5 +59,8 @@
     <ClInclude Include="MemoriaPartilhada.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AuxMapa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

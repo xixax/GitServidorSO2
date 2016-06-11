@@ -1,4 +1,4 @@
-#include "Mapa.h"
+#include "AuxMapa.h"
 int total;
 int totalnojogo;
 Jogador *jogadores[10];//todos os jogadores - mais facil para modificar os parametros depois
@@ -6,6 +6,7 @@ Jogador *jogadores[10];//todos os jogadores - mais facil para modificar os param
 typedef struct Jogos{
 	Mapa *mapa;
 	Jogador jogador;//utilizado para enviar o jogador do cliente
+	AuxMapa auxMapa[70*70];
 	//monstro
 	// _TCHARbuf[256];
 	int jogocomecou;//0 nao e 1 sim
