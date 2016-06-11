@@ -44,7 +44,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 		return 1;
 	}
 
-	// memoria partilhada
+	/*/ memoria partilhada
 	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 70*70*sizeof(MemoriaPartilhada), "TrabalhoSO");
 	//nome do mapfile qualquer
 	if (hMapFile == NULL)
@@ -60,7 +60,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 	CopyMemory(mp, temppartilhada, 70*70*sizeof(MemoriaPartilhada));
 
-	free(temppartilhada);
+	free(temppartilhada);*/
 	/////////////////////
 
 	//Invocar a thread que inscreve novos leitores
@@ -123,16 +123,13 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 
 DWORD WINAPI Clock(LPVOID param){
 	DWORD n;
-	int i = 0,x,y;
+	int i = 0, x, y;
 	while (1){
-		
-		//Fazer testes
-		//WaitForSingleObject(hmutex,INFINITE);
 		//copiaParaServidor(&jogo, mp);
 		for (x = 0; x < 70; x++){
 			for (y = 0; y < 70; y++){
 				jogo.auxMapa[x * 70 + y].cafeina = jogo.mapa[x * 70 + y].cafeina;
-				if (jogo.mapa[70].jogador != NULL){
+				if (jogo.mapa[x * 70 + y].jogador != NULL){
 					jogo.auxMapa[x * 70 + y].jogador.lentidao = jogo.mapa[x * 70 + y].jogador->lentidao;
 					jogo.auxMapa[x * 70 + y].jogador.pedras = jogo.mapa[x * 70 + y].jogador->pedras;
 					jogo.auxMapa[x * 70 + y].jogador.posx = jogo.mapa[x * 70 + y].jogador->posx;
@@ -154,7 +151,6 @@ DWORD WINAPI Clock(LPVOID param){
 				jogo.auxMapa[x * 70 + y].vitamina = jogo.mapa[x * 70 + y].vitamina;
 			}
 		}
-		
 		for (i = 0; i < total; i++){
 			if (jogadores[i] != NULL){
 				jogo.jogador=*jogadores[i];
@@ -182,8 +178,11 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	TCHAR argumentosBully[MAX] = TEXT("1 0 0");//tipo,N,clonado
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
+
 	//////////////////////////
+
 	TCHAR Username[TAM];
+
 	////recordes
 	int RecordeActual=0;
 	TCHAR NomeJogador[TAM];
@@ -354,8 +353,9 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}*/
 		}
 
-
 		//Fase 3- o jogo em si, nao sao aceites novos jogadores
+		//envia o jogo para todos
+
 		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogador.vida, jogador.lentidao, jogador.pedras, jogador.posx, jogador.posy);
 		while (jogador.vida>0 && msg.comando!=9){//fazer espera comando de saida, no final guarda os pontos que vao ser contados na thread clock
 			//ler do pipe do cliente
@@ -370,7 +370,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				//release mutex
 				ReleaseMutex(hmutex);
-				copiaParaMonstro(&jogo, mp);
+				//copiaParaMonstro(&jogo, mp);
 				RecordeActual++;
 			}
 		}
