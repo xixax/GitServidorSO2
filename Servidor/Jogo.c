@@ -1,6 +1,6 @@
 #include "Jogo.h"
 
-//fazer aqui as funçoes que vão inicializar o Jogo
+
 
 void ConstrutorJogo(Jogo *j){
 	inicializacaoMatriz(j);
@@ -15,18 +15,19 @@ void ConstrutorJogo(Jogo *j){
 //receber linhas e colunas se não for mapa pré-definido
 void inicializacaoMatriz(Jogo *j){
 	//mudar depois o valor 70
-	//Mapa auxMapa[70*70];
-	j->mapa = malloc(sizeof(Mapa) * 70 * 70);
+	
+	j->mapa = malloc(sizeof(Mapa) *70 * 70);
 	for (int x = 0; x < 70; x++){
 		for (int y = 0; y < 70; y++){
 			//ConstrutorMapa(&auxMapa[x*70 + y]);
-			Mapa auxmapa;
-			ConstrutorMapa(&auxmapa);
-			j->mapa[x * 70 + y] = auxmapa;
+			//Mapa auxmapa;
+			ConstrutorMapa(&j->mapa[x * 70 + y]);
+			//j->mapa[x * 70 + y] = auxmapa;
 			//inicializacao monstro, para nao por mais um for
 		}
 	}
 }
+
 
 //ver como fazer as salas
 //ACEDER AOS DADOS x*colunas+y
@@ -185,7 +186,7 @@ void MovimentoJogador(Mapa *mapa, Jogador *j, int comando){
 	switch (comando)
 	{
 	case 0:
-		if (mapa[(j->posx - 1)*70 + j->posy].muro == 0 && mapa[(j->posx - 1)*70+j->posy].jogador == NULL){//x-1 é para cima
+		if (mapa[(j->posx - 1)*70 + j->posy].muro != 1 && mapa[(j->posx - 1)*70+j->posy].jogador == NULL){//x-1 é para cima
 			//transfere jogador
 			mapa[(j->posx - 1)*70+ j->posy].jogador = mapa[(j->posx)*70+j->posy].jogador;
 			mapa[(j->posx)*70+j->posy].jogador = NULL;
@@ -193,7 +194,7 @@ void MovimentoJogador(Mapa *mapa, Jogador *j, int comando){
 		}
 		break;
 	case 1:
-		if (mapa[(j->posx + 1)*70 +j->posy].muro == 0 && mapa[(j->posx + 1)*70 +j->posy].jogador == NULL){//x+1 é para baixo
+		if (mapa[(j->posx + 1)*70 +j->posy].muro != 1 && mapa[(j->posx + 1)*70 +j->posy].jogador == NULL){//x+1 é para baixo
 			//transfere jogador
 			mapa[(j->posx + 1)*70 +j->posy].jogador = mapa[(j->posx) *70 +j->posy].jogador;
 			mapa[(j->posx)*70 + j->posy].jogador = NULL;
@@ -201,7 +202,7 @@ void MovimentoJogador(Mapa *mapa, Jogador *j, int comando){
 		}
 		break;
 	case 2:
-		if (mapa[(j->posx)*70 +j->posy - 1].muro == 0 && mapa[(j->posx)*70 +j->posy - 1].jogador == NULL){//y-1 é para a esquerda
+		if (mapa[(j->posx)*70 +j->posy - 1].muro != 1 && mapa[(j->posx)*70 +j->posy - 1].jogador == NULL){//y-1 é para a esquerda
 			//transfere jogador
 			mapa[(j->posx)*70 +j->posy - 1].jogador = mapa[(j->posx)*70 +j->posy].jogador;
 			mapa[(j->posx)*70 +j->posy].jogador = NULL;
@@ -210,7 +211,7 @@ void MovimentoJogador(Mapa *mapa, Jogador *j, int comando){
 		break;
 	case 3:
 		aux = mapa[(j->posx) * 70 + j->posy + 1];
-		if (mapa[(j->posx)*70 +j->posy + 1].muro == 0 && mapa[(j->posx)*70 +j->posy + 1].jogador == NULL){//y+1 é para cima
+		if (mapa[(j->posx)*70 +j->posy + 1].muro != 1 && mapa[(j->posx)*70 +j->posy + 1].jogador == NULL){//y+1 é para cima
 			//transfere jogador
 			mapa[(j->posx)*70 + j->posy + 1].jogador = mapa[(j->posx)*70 +j->posy].jogador;
 			mapa[(j->posx)*70 +j->posy].jogador = NULL;

@@ -84,6 +84,7 @@
     <ClCompile Include="Rede.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AuxMapa.h" />
     <ClInclude Include="Jogador.h" />
     <ClInclude Include="Mapa.h" />
     <ClInclude Include="Jogo.h" />

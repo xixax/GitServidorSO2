@@ -44,7 +44,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 		return 1;
 	}
 
-	// memoria partilhada
+	/*/ memoria partilhada
 	hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 70*70*sizeof(MemoriaPartilhada), "TrabalhoSO");
 	//nome do mapfile qualquer
 	if (hMapFile == NULL)
@@ -60,7 +60,7 @@ void criaLigacoes(int argc, LPTSTR argv[]){
 
 	CopyMemory(mp, temppartilhada, 70*70*sizeof(MemoriaPartilhada));
 
-	free(temppartilhada);
+	free(temppartilhada);*/
 	/////////////////////
 
 	//Invocar a thread que inscreve novos leitores
@@ -123,11 +123,36 @@ DWORD WINAPI RecebeLeitores(LPVOID param){
 
 DWORD WINAPI Clock(LPVOID param){
 	DWORD n;
-	int i = 0;
-	while (1){
-		copiaParaServidor(&jogo, mp);
+	int i = 0, x, y;
+	while (1){		
+		//copiaParaServidor(&jogo, mp);
+		for (x = 0; x < 70; x++){
+			for (y = 0; y < 70; y++){
+				jogo.auxMapa[x * 70 + y].cafeina = jogo.mapa[x * 70 + y].cafeina;
+				if (jogo.mapa[x * 70 + y].jogador != NULL){
+					jogo.auxMapa[x * 70 + y].jogador.lentidao = jogo.mapa[x * 70 + y].jogador->lentidao;
+					jogo.auxMapa[x * 70 + y].jogador.pedras = jogo.mapa[x * 70 + y].jogador->pedras;
+					jogo.auxMapa[x * 70 + y].jogador.posx = jogo.mapa[x * 70 + y].jogador->posx;
+					jogo.auxMapa[x * 70 + y].jogador.posy = jogo.mapa[x * 70 + y].jogador->posy;
+					jogo.auxMapa[x * 70 + y].jogador.vida = jogo.mapa[x * 70 + y].jogador->vida;
+				}
+				else{
+					jogo.auxMapa[x * 70 + y].jogador.vida = -1;
+					jogo.auxMapa[x * 70 + y].jogador.lentidao = -1;
+					jogo.auxMapa[x * 70 + y].jogador.pedras = -1;
+					jogo.auxMapa[x * 70 + y].jogador.posx = -1;
+					jogo.auxMapa[x * 70 + y].jogador.posy = -1;
+				}
+				jogo.auxMapa[x * 70 + y].monstro = jogo.mapa[x * 70 + y].monstro;
+				jogo.auxMapa[x * 70 + y].muro = jogo.mapa[x * 70 + y].muro;
+				jogo.auxMapa[x * 70 + y].orangebull = jogo.mapa[x * 70 + y].orangebull;
+				jogo.auxMapa[x * 70 + y].pedras = jogo.mapa[x * 70 + y].pedras;
+				jogo.auxMapa[x * 70 + y].visibilidade = jogo.mapa[x * 70 + y].visibilidade;
+				jogo.auxMapa[x * 70 + y].vitamina = jogo.mapa[x * 70 + y].vitamina;
+			}
+		}
 		for (i = 0; i < total; i++){
-			if (jogadores[i] != NULL){
+			if (jogadores[i] != NULL){ 
 				jogo.jogador=*jogadores[i];
 				WriteFile(PipeLeitores[i], (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 			}
@@ -152,7 +177,10 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 	TCHAR argumentosBully[MAX] = TEXT("1 0 0");//tipo,N,clonado
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
+
 	//////////////////////////
+
+	TCHAR Username[TAM];
 
 	////recordes
 	int RecordeActual=0;
@@ -172,7 +200,6 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 					TCHAR key[TAM] = REGISTRY_KEY, password[TAM];
 					HKEY hKey;
 					DWORD size;
-					TCHAR Username[TAM];
 					wcscpy(Username, msg.Username);
 					wcscat(key, Username);
 					if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
@@ -199,6 +226,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 					DWORD keyDword;
 					TCHAR keyName[TAM] = REGISTRY_KEY;
 					DWORD size;
+					wcscpy(Username, msg.Username);
 					wcscat_s(keyName, sizeof(keyName), msg.Username);
 
 					if (RegOpenKeyEx(HKEY_CURRENT_USER, keyName, 0, KEY_ALL_ACCESS, &key) == ERROR_SUCCESS){//verifica se já tem um cliente igual
@@ -274,6 +302,28 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				if (msg.comando == 8){
 					break;
 				}
+				if (msg.comando == 10){
+					TCHAR key[TAM] = REGISTRY_KEY;
+					HKEY hKey;
+					DWORD size;
+					TCHAR recorde1[TAM], recorde2[TAM], recorde3[TAM], recorde4[TAM], recorde5[TAM];
+					wcscat(key, Username);
+					if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
+					{
+						msg.sucesso = 1;
+						RegQueryValueEx(hKey, TEXT("1"), NULL, NULL, (LPBYTE)recorde1, &size);
+						RegQueryValueEx(hKey, TEXT("2"), NULL, NULL, (LPBYTE)recorde2, &size);
+						RegQueryValueEx(hKey, TEXT("3"), NULL, NULL, (LPBYTE)recorde3, &size);
+						RegQueryValueEx(hKey, TEXT("4"), NULL, NULL, (LPBYTE)recorde4, &size);
+						RegQueryValueEx(hKey, TEXT("5"), NULL, NULL, (LPBYTE)recorde5, &size);
+						msg.recorde1 = atoi(recorde1); msg.recorde2 = atoi(recorde2); msg.recorde3 = atoi(recorde3); msg.recorde4 = atoi(recorde4); msg.recorde5 = atoi(recorde5);
+						WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
+					}
+					else{
+						msg.sucesso = 0;
+						WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
+					}
+				}
 			}
 		}
 
@@ -283,15 +333,15 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			jogo.jogocomecou = 1;
 			for (int i = 0; i < total; i++){//envia para todos a informacao que o jogo vai comecar
 				if (jogadores[i] != NULL){
-					msg.comando = 8;
+					msg.comando = 8; 
 					WriteFile(PipeLeitores[i], (LPCVOID)&msg, sizeof(msg), &n, NULL);
 				}
-			}
+			} 
 			//adiciona os jogadores ao mapa
 			adicionaJogadoresMapa(&jogo);
 			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)Clock, (LPVOID)NULL, 0, NULL);
 			//activa os monstros
-			copiaParaMonstro(&jogo, mp);
+			/*copiaParaMonstro(&jogo, mp);
 			ZeroMemory(&si, sizeof(STARTUPINFO));
 			si.cb = sizeof(STARTUPINFO);
 			if (CreateProcess(executavel, argumentosDistraido, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
@@ -299,17 +349,13 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 			}
 			if (CreateProcess(executavel, argumentosBully, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
 				_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
-			}
+			}*/
 		}
-
 
 		//Fase 3- o jogo em si, nao sao aceites novos jogadores
 		//envia o jogo para todos
-		WaitForSingleObject(hmutex, INFINITE);//acho que nao esta a funcionar
-		jogo.jogador = jogador;
-		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogo.jogador.vida, jogo.jogador.lentidao, jogo.jogador.pedras, jogo.jogador.posx, jogo.jogador.posy);
-		WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
-		ReleaseMutex(hmutex);
+
+		_tprintf(TEXT("\n\nJogador\nVida:%d\nLentidao:%d\nPedras:%d\nPosx:%d\nPosy:%d\n\n"), jogador.vida, jogador.lentidao, jogador.pedras, jogador.posx, jogador.posy);
 		while (jogador.vida>0 && msg.comando!=9){//fazer espera comando de saida, no final guarda os pontos que vao ser contados na thread clock
 			//ler do pipe do cliente
 			ret = ReadFile(pipeRecebe, (LPVOID)&msg, sizeof(msg), &n, NULL);
@@ -323,7 +369,7 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				WriteFile(pipeEnvia, (LPCVOID)&jogo, sizeof(jogo), &n, NULL);
 				//release mutex
 				ReleaseMutex(hmutex);
-				copiaParaMonstro(&jogo, mp);
+				//copiaParaMonstro(&jogo, mp);
 				RecordeActual++;
 			}
 		}
