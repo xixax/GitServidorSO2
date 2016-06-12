@@ -359,9 +359,9 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 		if (CreateProcess(executavel, argumentosDistraido, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
 			_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
 		}
-		/*if (CreateProcess(executavel, argumentosBully, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
+		if (CreateProcess(executavel, argumentosBully, NULL, NULL, 0, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi) == 0){
 			_tprintf(TEXT("\nOcorreu um erro ao iniciar o Monstro!!!!\n\n"));
-			}*/
+		}
 	}
 
 	//Fase 3- o jogo em si, nao sao aceites novos jogadores
