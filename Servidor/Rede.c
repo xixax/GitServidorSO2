@@ -318,17 +318,16 @@ DWORD WINAPI AtendeCliente(LPVOID param){
 				TCHAR key[TAM] = REGISTRY_KEY;
 				HKEY hKey;
 				DWORD size;
-				TCHAR recorde1[TAM], recorde2[TAM], recorde3[TAM], recorde4[TAM], recorde5[TAM];
 				wcscat(key, Username);
 				if (RegOpenKeyEx(HKEY_CURRENT_USER, key, 0, KEY_ALL_ACCESS, &hKey) == ERROR_SUCCESS)
 				{
 					msg.sucesso = 1;
-					RegQueryValueEx(hKey, TEXT("1"), NULL, NULL, (LPBYTE)recorde1, &size);
-					RegQueryValueEx(hKey, TEXT("2"), NULL, NULL, (LPBYTE)recorde2, &size);
-					RegQueryValueEx(hKey, TEXT("3"), NULL, NULL, (LPBYTE)recorde3, &size);
-					RegQueryValueEx(hKey, TEXT("4"), NULL, NULL, (LPBYTE)recorde4, &size);
-					RegQueryValueEx(hKey, TEXT("5"), NULL, NULL, (LPBYTE)recorde5, &size);
-					msg.recorde1 = atoi(recorde1); msg.recorde2 = atoi(recorde2); msg.recorde3 = atoi(recorde3); msg.recorde4 = atoi(recorde4); msg.recorde5 = atoi(recorde5);
+					RegQueryValueEx(hKey, TEXT("1"), NULL, NULL, (LPBYTE)msg.recorde1, &size);
+					RegQueryValueEx(hKey, TEXT("2"), NULL, NULL, (LPBYTE)msg.recorde2, &size);
+					RegQueryValueEx(hKey, TEXT("3"), NULL, NULL, (LPBYTE)msg.recorde3, &size);
+					RegQueryValueEx(hKey, TEXT("4"), NULL, NULL, (LPBYTE)msg.recorde4, &size);
+					RegQueryValueEx(hKey, TEXT("5"), NULL, NULL, (LPBYTE)msg.recorde5, &size);
+					//msg.recorde1 = atoi(recorde1); msg.recorde2 = atoi(recorde2); msg.recorde3 = atoi(recorde3); msg.recorde4 = atoi(recorde4); msg.recorde5 = atoi(recorde5);
 					WriteFile(pipeEnvia, (LPCVOID)&msg, sizeof(msg), &n, NULL);//envia para o cliente
 				}
 				else{
